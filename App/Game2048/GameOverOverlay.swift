@@ -14,7 +14,7 @@ final class GameOverOverlay: UIView {
         addSubview(card)
 
         let title = UILabel()
-        title.text = "Game Over!"
+        title.text = NSLocalizedString("gameover", comment: "")
         title.textColor = UIColor(hex: 0x4D4D4D)
         title.font = UIFont(name: "HelveticaNeue-UltraLight", size: 75)
             ?? UIFont.systemFont(ofSize: 75, weight: .ultraLight)
@@ -57,7 +57,7 @@ final class GameOverOverlay: UIView {
         NSLayoutConstraint.activate([
             card.centerXAnchor.constraint(equalTo: centerXAnchor),
             card.centerYAnchor.constraint(equalTo: centerYAnchor),
-            card.widthAnchor.constraint(equalToConstant: 320),
+            card.widthAnchor.constraint(equalToConstant: 300),
             card.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 20),
             card.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -20),
 
@@ -66,8 +66,8 @@ final class GameOverOverlay: UIView {
             stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
             stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
 
-            restart.heightAnchor.constraint(equalToConstant: 80),
-            share.heightAnchor.constraint(equalToConstant: 80),
+            restart.heightAnchor.constraint(equalToConstant: 70),
+            share.heightAnchor.constraint(equalToConstant: 70),
         ])
     }
 

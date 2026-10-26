@@ -1,0 +1,14 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Como Jogar";
+"more" = "Mais";
+"set" = "Configurações";
+"start_new" = "Começar\num novo Jogo?";
+"discard" = "Isso irá descartar sua\njogada atual!";
+"gameover" = "Fim de Jogo!";
+"tutorial" = "Como jogar?";
+"t1" = "Deslize para cima, baixo, esquerda ou direita para mover os blocos nessa direção.";
+"t2" = "Ao se tocarem, os mesmos se fundem para formar um bloco maior.";
+"t3" = "Seu objetivo é formar o bloco 2048!";
+"bol" = "Boa sorte!";
+"pref_theme" = "Tema";

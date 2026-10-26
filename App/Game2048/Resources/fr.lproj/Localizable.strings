@@ -1,0 +1,14 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Comment jouer";
+"more" = "Plus";
+"set" = "Réglages";
+"start_new" = "Commencer nouvelle partie?";
+"discard" = "Ceci va effacer votre partie actuelle!";
+"gameover" = "C\'est fini!";
+"tutorial" = "Comment jouer?";
+"t1" = "Glisser vers le haut, le bas, la gauche ou la droite pour bouger les tuiles dans cette direction.";
+"t2" = "Lorsqu\'elle se touche, les tuiles de même numéro s\'additionne et en forme une de valeur double.";
+"t3" = "Le but est de former la tuiles 2048!";
+"bol" = "Bonne chance!";
+"pref_theme" = "Thème";

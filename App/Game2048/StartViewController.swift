@@ -10,8 +10,8 @@ final class StartViewController: UIViewController {
         let titleLabel = UILabel()
         titleLabel.text = "2048"
         titleLabel.textColor = .white
-        titleLabel.font = UIFont(name: "HelveticaNeue-UltraLight", size: 96)
-            ?? UIFont.systemFont(ofSize: 96, weight: .ultraLight)
+        titleLabel.font = UIFont(name: "HelveticaNeue-UltraLight", size: 104)
+            ?? UIFont.systemFont(ofSize: 104, weight: .ultraLight)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let playButton = UIButton(type: .custom)
@@ -26,13 +26,13 @@ final class StartViewController: UIViewController {
         menuButton.imageView?.contentMode = .scaleAspectFit
         menuButton.showsMenuAsPrimaryAction = true
         menuButton.menu = UIMenu(children: [
-            UIAction(title: "How to play") { [weak self] _ in
+            UIAction(title: NSLocalizedString("tut", comment: "")) { [weak self] _ in
                 self?.presentFullScreen(TutorialViewController())
             },
-            UIAction(title: "More") { [weak self] _ in
+            UIAction(title: NSLocalizedString("more", comment: "")) { [weak self] _ in
                 self?.presentAbout()
             },
-            UIAction(title: "Settings") { [weak self] _ in
+            UIAction(title: NSLocalizedString("set", comment: "")) { [weak self] _ in
                 self?.presentSettings()
             },
         ])
@@ -48,8 +48,8 @@ final class StartViewController: UIViewController {
 
             playButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 90),
-            playButton.widthAnchor.constraint(equalToConstant: 100),
-            playButton.heightAnchor.constraint(equalToConstant: 100),
+            playButton.widthAnchor.constraint(equalToConstant: 80),
+            playButton.heightAnchor.constraint(equalToConstant: 80),
 
             menuButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             menuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),

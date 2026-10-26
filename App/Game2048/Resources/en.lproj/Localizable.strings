@@ -1,0 +1,25 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "How to play";
+"more" = "More";
+"set" = "Settings";
+"start_new" = "Start\na new Game?";
+"discard" = "This will discard your\ncurrent game!";
+"gameover" = "Game Over!";
+"score" = "Score";
+"tutorial" = "How to play?";
+"t1" = "Swipe up, down left or right to move all tiles in that direction.";
+"t2" = "On touching, the same tiles add and merge to form a larger tile.";
+"t3" = "Your aim is to form the 2048 tile!";
+"bol" = "Best of luck!";
+"pref_theme" = "Theme";
+"pref_themebutton" = "Theme Quick Switch";
+"slider_title" = "Swipe Sensitivity";
+"cancel" = "Cancel";
+"sens_low" = "Low";
+"sens_medium" = "Medium";
+"sens_high" = "High";
+"sens_very_high" = "Very High";
+"theme_holo" = "Holo (Default)";
+"theme_dark" = "Dark";
+"theme_classic" = "Classic";

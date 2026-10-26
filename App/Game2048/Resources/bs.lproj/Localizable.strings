@@ -1,0 +1,14 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Kako igrati";
+"more" = "Više";
+"set" = "Postavke";
+"start_new" = "Započni\nnovu igru?";
+"discard" = "To će zaustaviti vašu \ntrenutnu igru!";
+"gameover" = "Game Over!";
+"tutorial" = "Kako igrati?";
+"t1" = "Kliznite gore, dolje, lijevo ili desno da pomjerite sve pločice u tom smjeru.";
+"t2" = "Pri dodiru, iste pločice se spajaju i sabiraju te formiraju veću pločicu.";
+"t3" = "Cilj je da formirate pločicu sa brojem 2048!";
+"bol" = "Sretno!";
+"pref_theme" = "Tema";

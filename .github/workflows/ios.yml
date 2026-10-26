@@ -73,6 +73,18 @@ jobs:
           xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -showGameOver
           sleep 3
           xcrun simctl io "iPhone 16" screenshot artifacts/gameover.png
+          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
+          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -showNewGame
+          sleep 3
+          xcrun simctl io "iPhone 16" screenshot artifacts/newgame.png
+          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
+          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(zh-Hans)' -AppleLocale zh_CN
+          sleep 3
+          xcrun simctl io "iPhone 16" screenshot artifacts/game-zh.png
+          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
+          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(de)' -AppleLocale de_DE
+          sleep 3
+          xcrun simctl io "iPhone 16" screenshot artifacts/game-de.png
           for screen in showSettings:settings showTutorial:tutorial showAbout:about; do
             flag=${screen%%:*}
             name=${screen##*:}
