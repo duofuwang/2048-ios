@@ -11,6 +11,7 @@ final class BoardView: UIView {
     private var cellSize: CGFloat = 0
     private let gridWidth: CGFloat = 2
     private var boardOrigin = CGPoint.zero
+    private var lastLayoutSize: CGSize = .zero
 
     init(engine: GameEngine, theme: Theme) {
         self.engine = engine
@@ -44,6 +45,8 @@ final class BoardView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        guard bounds.size != lastLayoutSize else { return }
+        lastLayoutSize = bounds.size
         recomputeLayout()
     }
 

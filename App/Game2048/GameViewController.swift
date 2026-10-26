@@ -12,6 +12,7 @@ final class GameViewController: UIViewController {
     private var soundButton: UIButton!
     private var audioPlayers: [AVAudioPlayer] = []
     private var nextAudioPlayer = 0
+    private var mergeSoundIndex = 0
     private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
     private var toastLabel: UILabel?
@@ -189,11 +190,9 @@ final class GameViewController: UIViewController {
     private func performMove(_ direction: Direction) {
         guard !engine.lose else { return }
         boardView.startAnimating()
-        let moved = engine.move(direction)
+        mergeSoundIndex = 0
+        engine.move(direction)
         updateScore()
-        if moved {
-            store.snapshot = engine.snapshot()
-        }
     }
 
     private func updateScore() {
@@ -206,10 +205,10 @@ final class GameViewController: UIViewController {
         soundButton.setImage(UIImage(named: on ? "vol_press" : "mute_press"), for: .highlighted)
     }
 
-    private func playMergeSound() {
+    private func playMergeSound(after delay: TimeInterval) {
         guard store.soundVolume > 0, !audioPlayers.isEmpty else { return }
         let volume = Float(store.soundVolume)
-        audioQueue.async { [weak self] in
+        audioQueue.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self, !self.audioPlayers.isEmpty else { return }
             let player = self.audioPlayers[self.nextAudioPlayer % self.audioPlayers.count]
             self.nextAudioPlayer += 1
@@ -378,7 +377,9 @@ final class GameViewController: UIViewController {
 
 extension GameViewController: GameEngineDelegate {
     func gameEngine(_ engine: GameEngine, didMerge value: Int) {
-        playMergeSound()
+        let delay = Double(mergeSoundIndex) * 0.012
+        mergeSoundIndex += 1
+        playMergeSound(after: delay)
     }
 
     func gameEngine(_ engine: GameEngine, didReach value: Int) {
