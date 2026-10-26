@@ -83,35 +83,35 @@ jobs:
               --predicate 'eventMessage CONTAINS[c] "Game2048"' | tail -60 || true
             exit $STATUS
           fi
-          sleep 3
+          sleep 6
           mkdir -p artifacts
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/launch.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard
-          sleep 3
+          sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showGameOver
-          sleep 3
+          sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/gameover.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showNewGame
-          sleep 3
+          sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/newgame.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(zh-Hans)' -AppleLocale zh_CN
-          sleep 3
+          sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game-zh.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(de)' -AppleLocale de_DE
-          sleep 3
+          sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game-de.png
           for screen in showSettings:settings showTutorial:tutorial showAbout:about; do
             flag=${screen%%:*}
             name=${screen##*:}
             xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
             xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 "-$flag"
-            sleep 3
+            sleep 6
             xcrun simctl io "$SIMULATOR_UDID" screenshot "artifacts/$name.png"
           done
 
