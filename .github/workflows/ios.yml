@@ -8,9 +8,31 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes | head -20
+
+      - name: Pick simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | /usr/bin/python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              if 'iOS-26-5' not in runtime:
+                  continue
+              for device in devices:
+                  if device['name'] == 'iPhone 17':
+                      print(device['udid'])
+                      raise SystemExit
+          raise SystemExit('iPhone 17 on iOS 26.5 not found')
+          ")
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "Using simulator $UDID"
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -19,7 +41,7 @@ jobs:
         run: swift test --package-path Core
 
       - name: Boot simulator
-        run: xcrun simctl boot "iPhone 16" || true
+        run: xcrun simctl boot "$SIMULATOR_UDID" || true
 
       - name: Generate project
         working-directory: App
@@ -29,17 +51,17 @@ jobs:
         working-directory: App
         run: |
           xcodebuild test -project Game2048.xcodeproj -scheme Game2048 \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath build \
             ENABLE_DEBUG_DYLIB=NO
 
       - name: Launch and screenshot
         run: |
-          xcrun simctl bootstatus "iPhone 16" -b
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
           APP=App/build/Build/Products/Debug-iphonesimulator/Game2048.app
-          xcrun simctl install "iPhone 16" "$APP"
+          xcrun simctl install "$SIMULATOR_UDID" "$APP"
           set +e
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048
           STATUS=$?
           set -e
           if [ $STATUS -ne 0 ]; then
@@ -57,40 +79,40 @@ jobs:
               head -80 "$f"
             done
             echo "=== simulator log ==="
-            xcrun simctl spawn "iPhone 16" log show --last 2m --style compact \
+            xcrun simctl spawn "$SIMULATOR_UDID" log show --last 2m --style compact \
               --predicate 'eventMessage CONTAINS[c] "Game2048"' | tail -60 || true
             exit $STATUS
           fi
           sleep 3
           mkdir -p artifacts
-          xcrun simctl io "iPhone 16" screenshot artifacts/launch.png
-          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/launch.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard
           sleep 3
-          xcrun simctl io "iPhone 16" screenshot artifacts/game.png
-          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -showGameOver
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showGameOver
           sleep 3
-          xcrun simctl io "iPhone 16" screenshot artifacts/gameover.png
-          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -showNewGame
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/gameover.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showNewGame
           sleep 3
-          xcrun simctl io "iPhone 16" screenshot artifacts/newgame.png
-          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(zh-Hans)' -AppleLocale zh_CN
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/newgame.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(zh-Hans)' -AppleLocale zh_CN
           sleep 3
-          xcrun simctl io "iPhone 16" screenshot artifacts/game-zh.png
-          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(de)' -AppleLocale de_DE
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game-zh.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -seedBoard -AppleLanguages '(de)' -AppleLocale de_DE
           sleep 3
-          xcrun simctl io "iPhone 16" screenshot artifacts/game-de.png
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/game-de.png
           for screen in showSettings:settings showTutorial:tutorial showAbout:about; do
             flag=${screen%%:*}
             name=${screen##*:}
-            xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
-            xcrun simctl launch "iPhone 16" com.duofuwang.game2048 "-$flag"
+            xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+            xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 "-$flag"
             sleep 3
-            xcrun simctl io "iPhone 16" screenshot "artifacts/$name.png"
+            xcrun simctl io "$SIMULATOR_UDID" screenshot "artifacts/$name.png"
           done
 
       - uses: actions/upload-artifact@v4
