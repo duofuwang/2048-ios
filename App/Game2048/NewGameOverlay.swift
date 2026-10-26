@@ -24,8 +24,10 @@ final class NewGameOverlay: UIView {
         title.minimumScaleFactor = 0.5
 
         let noButton = button(defaultName: "no_default", pressName: "no_press")
+        noButton.accessibilityIdentifier = "cancelNewGame"
         noButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         let yesButton = button(defaultName: "yes_default", pressName: "yes_press")
+        yesButton.accessibilityIdentifier = "confirmNewGame"
         yesButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
 
         let row = UIStackView(arrangedSubviews: [noButton, yesButton])

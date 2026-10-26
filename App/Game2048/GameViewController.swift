@@ -29,6 +29,11 @@ final class GameViewController: UIViewController {
                 board: Self.seededBoard, score: 676, maxMerged: 32,
                 highScore: 676, won: false, lose: true
             ))
+        } else if ProcessInfo.processInfo.arguments.contains("-seedMerge") {
+            engine.restore(GameSnapshot(
+                board: Self.mergeBoard, score: 0, maxMerged: 0,
+                highScore: 0, won: false, lose: false
+            ))
         } else if ProcessInfo.processInfo.arguments.contains("-seedBoard") {
             engine.restore(GameSnapshot(
                 board: Self.seededBoard, score: 300, maxMerged: 128,
@@ -83,6 +88,7 @@ final class GameViewController: UIViewController {
         scoreValue.adjustsFontSizeToFitWidth = true
         scoreValue.minimumScaleFactor = 0.4
         scoreValue.translatesAutoresizingMaskIntoConstraints = false
+        scoreValue.accessibilityIdentifier = "scoreLabel"
         scoreValueLabel = scoreValue
 
         let board = BoardView(engine: engine, theme: theme)
@@ -90,10 +96,14 @@ final class GameViewController: UIViewController {
         boardView = board
 
         let newGame = imageButton(defaultName: "re_default", pressName: "re_press", action: #selector(newGameTapped))
+        newGame.accessibilityIdentifier = "newGameButton"
         let pause = imageButton(defaultName: "pause_default", pressName: "pause_press", action: #selector(pauseTapped))
+        pause.accessibilityIdentifier = "pauseButton"
         let themeSwitch = imageButton(defaultName: "theme_default", pressName: "theme_press", action: #selector(themeTapped))
         themeSwitch.isHidden = !store.themeQuickSwitch
+        themeSwitch.accessibilityIdentifier = "themeButton"
         let sound = imageButton(defaultName: "vol_default", pressName: "vol_press", action: #selector(soundTapped))
+        sound.accessibilityIdentifier = "soundButton"
         soundButton = sound
         updateSoundButton()
 
@@ -333,6 +343,16 @@ final class GameViewController: UIViewController {
         let rows = [
             [2, 4, 8, 16],
             [32, 64, 128, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ]
+        return (0..<4).map { x in (0..<4).map { y in rows[y][x] } }
+    }()
+
+    private static let mergeBoard: [[Int]] = {
+        let rows = [
+            [2, 2, 0, 0],
+            [0, 0, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
         ]

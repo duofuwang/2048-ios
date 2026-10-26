@@ -17,6 +17,20 @@ final class BoardView: UIView {
         super.init(frame: .zero)
         backgroundColor = theme.backgroundColor
         isOpaque = true
+        isAccessibilityElement = true
+        accessibilityIdentifier = "board"
+        accessibilityLabel = "board"
+    }
+
+    override var accessibilityValue: String? {
+        get {
+            (0..<engine.grid.sizeY).map { y in
+                (0..<engine.grid.sizeX)
+                    .map { x in String(engine.grid.field[x][y]?.value ?? 0) }
+                    .joined(separator: ",")
+            }.joined(separator: ";")
+        }
+        set {}
     }
 
     required init?(coder: NSCoder) {

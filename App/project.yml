@@ -37,6 +37,18 @@ targets:
             UIWindowSceneSessionRoleApplication:
               - UISceneConfigurationName: Default Configuration
                 UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+  Game2048UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Game2048UITests
+    dependencies:
+      - target: Game2048
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.duofuwang.game2048UITests
+        TEST_TARGET_NAME: Game2048
+        GENERATE_INFOPLIST_FILE: YES
 packages:
   Game2048Core:
     path: ../Core
@@ -45,5 +57,10 @@ schemes:
     build:
       targets:
         Game2048: all
+        Game2048UITests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: Game2048UITests
