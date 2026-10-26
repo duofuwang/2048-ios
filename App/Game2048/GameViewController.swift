@@ -47,6 +47,9 @@ final class GameViewController: UIViewController {
             swipe.isLocked = true
             showGameOver()
         }
+        if ProcessInfo.processInfo.arguments.contains("-showNewGame") {
+            showNewGameConfirm()
+        }
 
         backgroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
@@ -66,7 +69,7 @@ final class GameViewController: UIViewController {
 
     private func buildInterface() {
         let scoreTitle = UILabel()
-        scoreTitle.text = "Score"
+        scoreTitle.text = NSLocalizedString("score", comment: "")
         scoreTitle.textColor = theme.scoreColor
         scoreTitle.font = thinFont(25)
         scoreTitle.textAlignment = .center
@@ -122,12 +125,12 @@ final class GameViewController: UIViewController {
             buttons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             buttons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             buttons.bottomAnchor.constraint(equalTo: safe.bottomAnchor, constant: -8),
-            buttons.heightAnchor.constraint(equalToConstant: 70),
+            buttons.heightAnchor.constraint(equalToConstant: 60),
         ])
 
         for button in [newGame, pause, themeSwitch, sound] {
-            button.widthAnchor.constraint(equalToConstant: 70).isActive = true
-            button.heightAnchor.constraint(equalToConstant: 70).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 60).isActive = true
+            button.heightAnchor.constraint(equalToConstant: 60).isActive = true
         }
     }
 
@@ -269,16 +272,26 @@ final class GameViewController: UIViewController {
     }
 
     @objc private func newGameTapped() {
-        let alert = UIAlertController(
-            title: "Start\na new Game?",
-            message: "This will discard your\ncurrent game!",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "No", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+        showNewGameConfirm()
+    }
+
+    private func showNewGameConfirm() {
+        let overlay = NewGameOverlay()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.onCancel = { [weak overlay] in
+            overlay?.removeFromSuperview()
+        }
+        overlay.onConfirm = { [weak self, weak overlay] in
+            overlay?.removeFromSuperview()
             self?.startNewGame()
-        })
-        present(alert, animated: true)
+        }
+        view.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
     }
 
     @objc private func themeTapped() {

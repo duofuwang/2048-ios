@@ -1,0 +1,18 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Come si gioca";
+"more" = "Info";
+"set" = "Impostazioni";
+"start_new" = "Avvia\na una nuova partita?";
+"discard" = "Perderai il risultato\ndella partita in corso!";
+"gameover" = "Partita terminata!";
+"score" = "Punteggio";
+"tutorial" = "Come si gioca?";
+"t1" = "Trascina il dito su, giù, sinistra o destra per muovere tutte le piastrelle in quella direzione.";
+"t2" = "Nello spostamento, le piastrelle uguali verranno unite generando una piastrella con il valore sommato.";
+"t3" = "Il tuo obiettivo è raggiungere 2048!";
+"bol" = "Buon divertimento!";
+"pref_theme" = "Tema";
+"theme_holo" = "Holo (Predefinito)";
+"theme_dark" = "Scuro";
+"theme_classic" = "Classico";

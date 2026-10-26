@@ -1,0 +1,14 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Cómo jugar";
+"more" = "Más";
+"set" = "Ajustes";
+"start_new" = "¿Empezar un nuevo juego?";
+"discard" = "¡Ésto terminará tu\njuego actual!";
+"gameover" = "Game Over!";
+"tutorial" = "¿Cómo jugar?";
+"t1" = "Desliza hacia arriba, hacia abajo, hacia la derecha o hacia la izquierda para mover todas las fichas en esa dirección.";
+"t2" = "Cuando se toquen, las fichas iguales se juntarán para formar una ficha de un valor más grande.";
+"t3" = "¡Tu objetivo es formar la ficha de 2048!";
+"bol" = "¡Mucha suerte!";
+"pref_theme" = "Tema";

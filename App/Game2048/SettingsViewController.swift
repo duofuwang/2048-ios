@@ -7,7 +7,7 @@ final class SettingsViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Settings"
+        title = NSLocalizedString("set", comment: "")
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .done, target: self, action: #selector(done)
         )
@@ -35,22 +35,26 @@ final class SettingsViewController: UIViewController {
     }
 
     private func chooseTheme() {
-        let alert = UIAlertController(title: "Theme", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(
+            title: NSLocalizedString("pref_theme", comment: ""),
+            message: nil,
+            preferredStyle: .actionSheet
+        )
         for theme in themes {
             alert.addAction(UIAlertAction(title: name(of: theme), style: .default) { [weak self] _ in
                 self?.store.theme = theme
                 self?.tableView.reloadData()
             })
         }
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel))
         present(alert, animated: true)
     }
 
     private func name(of theme: Theme) -> String {
         switch theme {
-        case .holo: return "Holo (Default)"
-        case .dark: return "Dark"
-        case .classic: return "Classic"
+        case .holo: return NSLocalizedString("theme_holo", comment: "")
+        case .dark: return NSLocalizedString("theme_dark", comment: "")
+        case .classic: return NSLocalizedString("theme_classic", comment: "")
         }
     }
 }
@@ -64,13 +68,13 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         switch indexPath.row {
         case 0:
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-            cell.textLabel?.text = "Theme"
+            cell.textLabel?.text = NSLocalizedString("pref_theme", comment: "")
             cell.detailTextLabel?.text = name(of: store.theme)
             cell.accessoryType = .disclosureIndicator
             return cell
         case 1:
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = "Theme Quick Switch"
+            cell.textLabel?.text = NSLocalizedString("pref_themebutton", comment: "")
             cell.selectionStyle = .none
             let toggle = UISwitch()
             toggle.isOn = store.themeQuickSwitch
@@ -105,7 +109,7 @@ private final class SensitivityCell: UITableViewCell {
         selectionStyle = .none
 
         let title = UILabel()
-        title.text = "Swipe Sensitivity"
+        title.text = NSLocalizedString("slider_title", comment: "")
         title.font = .systemFont(ofSize: 17)
 
         valueLabel.font = .systemFont(ofSize: 15)
@@ -145,13 +149,13 @@ private final class SensitivityCell: UITableViewCell {
     private func updateLabel() {
         let value = slider.value
         if value < 0.25 {
-            valueLabel.text = "Low"
+            valueLabel.text = NSLocalizedString("sens_low", comment: "")
         } else if value < 0.5 {
-            valueLabel.text = "Medium"
+            valueLabel.text = NSLocalizedString("sens_medium", comment: "")
         } else if value < 0.75 {
-            valueLabel.text = "High"
+            valueLabel.text = NSLocalizedString("sens_high", comment: "")
         } else {
-            valueLabel.text = "Very High"
+            valueLabel.text = NSLocalizedString("sens_very_high", comment: "")
         }
     }
 }

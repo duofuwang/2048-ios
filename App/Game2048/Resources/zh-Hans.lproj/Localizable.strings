@@ -1,0 +1,21 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "怎麼玩";
+"more" = "更多";
+"set" = "設定";
+"start_new" = "確定開始一個新遊戲?";
+"discard" = "這個動作不會儲存你現在的遊戲記錄喔!";
+"gameover" = "遊戲結束!";
+"score" = "分數";
+"tutorial" = "怎麼玩?";
+"t1" = "向上, 下, 左, 右滑動來移動所有磚塊的方向";
+"t2" = "當兩磚塊相觸時, 他們上的數字會相加成為一個新的磚塊";
+"t3" = "你的目標是要形成 2048 磚!";
+"bol" = "加油!";
+"pref_theme" = "主題";
+"pref_themebutton" = "主題快速換";
+"slider_title" = "滑動靈敏度";
+"sens_low" = "還可以";
+"sens_medium" = "恩, 不錯!";
+"sens_high" = "讚喔!";
+"sens_very_high" = "哇也太讚";

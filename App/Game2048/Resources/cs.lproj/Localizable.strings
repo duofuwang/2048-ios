@@ -1,0 +1,21 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Jak hrát";
+"more" = "Něco o hře";
+"set" = "Nastavení";
+"start_new" = "Začít novou hru?";
+"discard" = "Tím přijdete o vaši\nsoučasnou hru!";
+"gameover" = "Dohráli jste!";
+"score" = "Skóre";
+"tutorial" = "Jak hrát?";
+"t1" = "Posouvejte prstem nahoru, dolů, doleva nebo doprava abyste tím samým směrem přesunuli všechny dlaždice.";
+"t2" = "Když se dvě, stejně velké dlaždice sloučí, získáte jednu s dvojnásobnou velikostí.";
+"t3" = "Vaším cílem je získat dlaždici s hodnotou 2048!";
+"bol" = "Hodně štěstí!";
+"pref_theme" = "Téma";
+"pref_themebutton" = "Rychlá změna vzhledu";
+"slider_title" = "Citlivost posouvání";
+"sens_low" = "Nízká";
+"sens_medium" = "Střední";
+"sens_high" = "Vysoká";
+"sens_very_high" = "Velmi vysoká";

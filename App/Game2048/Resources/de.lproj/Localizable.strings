@@ -1,0 +1,20 @@
+/* Strings extracted from shreyassood/2048 (MIT). */
+
+"tut" = "Wie wird gespielt?";
+"more" = "Mehr…";
+"set" = "Einstellungen";
+"start_new" = "Willst du wirklich \nein neues Spiel starten?";
+"discard" = "Das wird deinen \naktuellen Spielstand löschen!";
+"gameover" = "Game Over!";
+"tutorial" = "Wie wird gespielt?";
+"t1" = "Wische nach oben, unten, links oder rechts, um die Blöcke in die jeweilige Richtung zu schieben.";
+"t2" = "Wenn gleiche Blöcke sich berühren, werden diese zu einem größeren Block.";
+"t3" = "Dein Ziel ist es, einen 2048 Block zu bilden!";
+"bol" = "Viel Glück!";
+"pref_theme" = "Thema";
+"pref_themebutton" = "Schneller Themenwechsel";
+"slider_title" = "Sensitivität des Wischens";
+"sens_low" = "Träge";
+"sens_medium" = "Medium";
+"sens_high" = "Hoch";
+"sens_very_high" = "Sehr hoch";

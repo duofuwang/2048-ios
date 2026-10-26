@@ -19,23 +19,23 @@ final class TutorialViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(stack)
 
-        let title = label("How to play?", size: 60, fontName: "HelveticaNeue-UltraLight")
+        let title = label(NSLocalizedString("tutorial", comment: ""), size: 60, fontName: "HelveticaNeue-UltraLight")
         let stepOne = label(
-            "Swipe up, down left or right to move all tiles in that direction.",
+            NSLocalizedString("t1", comment: ""),
             size: 20, fontName: "HelveticaNeue-Light"
         )
         let gridView = UIImageView(image: animatedGIF(named: "grid"))
         gridView.contentMode = .scaleAspectFit
         let stepTwo = label(
-            "On touching, the same tiles add and merge to form a larger tile.",
+            NSLocalizedString("t2", comment: ""),
             size: 20, fontName: "HelveticaNeue-Light"
         )
         let addImage = UIImageView(image: UIImage(named: "add"))
         addImage.contentMode = .scaleAspectFit
-        let stepThree = label("Your aim is to form the 2048 tile!", size: 20, fontName: "HelveticaNeue-Light")
+        let stepThree = label(NSLocalizedString("t3", comment: ""), size: 20, fontName: "HelveticaNeue-Light")
         let maxImage = UIImageView(image: UIImage(named: "max"))
         maxImage.contentMode = .scaleAspectFit
-        let best = label("Best of luck!", size: 40, fontName: "HelveticaNeue-Light")
+        let best = label(NSLocalizedString("bol", comment: ""), size: 40, fontName: "HelveticaNeue-Light")
 
         let closeButton = UIButton(type: .custom)
         closeButton.setImage(UIImage(named: "yes_default"), for: .normal)
@@ -48,10 +48,10 @@ final class TutorialViewController: UIViewController {
         }
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
             stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 24),
             stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
