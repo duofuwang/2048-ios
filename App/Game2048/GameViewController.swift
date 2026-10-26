@@ -11,6 +11,7 @@ final class GameViewController: UIViewController {
     private var scoreValueLabel: UILabel!
     private var soundButton: UIButton!
     private var audioPlayer: AVAudioPlayer?
+    private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
     private var toastLabel: UILabel?
     private var gameOverOverlay: GameOverOverlay?
@@ -182,9 +183,9 @@ final class GameViewController: UIViewController {
 
     private func performMove(_ direction: Direction) {
         guard !engine.lose else { return }
+        boardView.startAnimating()
         let moved = engine.move(direction)
         if moved {
-            boardView.startAnimating()
             store.snapshot = engine.snapshot()
         }
     }
@@ -201,9 +202,12 @@ final class GameViewController: UIViewController {
 
     private func playMergeSound() {
         guard store.soundVolume > 0, let audioPlayer else { return }
-        audioPlayer.volume = Float(store.soundVolume)
-        audioPlayer.currentTime = 0
-        audioPlayer.play()
+        let volume = Float(store.soundVolume)
+        audioQueue.async {
+            audioPlayer.volume = volume
+            audioPlayer.currentTime = 0
+            audioPlayer.play()
+        }
     }
 
     private func applyTheme(_ theme: Theme) {
@@ -375,7 +379,9 @@ extension GameViewController: GameEngineDelegate {
     }
 
     func gameEngine(_ engine: GameEngine, didUpdateHighScore value: Int) {
-        store.highScore = value
+        DispatchQueue.main.async { [weak self] in
+            self?.store.highScore = value
+        }
     }
 
     func gameEngineDidEnd(_ engine: GameEngine) {
