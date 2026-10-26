@@ -21,16 +21,40 @@ final class StartViewController: UIViewController {
         playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
         playButton.translatesAutoresizingMaskIntoConstraints = false
 
+        let menuButton = UIButton(type: .custom)
+        menuButton.setImage(UIImage(named: "ic_action_overflow"), for: .normal)
+        menuButton.imageView?.contentMode = .scaleAspectFit
+        menuButton.showsMenuAsPrimaryAction = true
+        menuButton.menu = UIMenu(children: [
+            UIAction(title: "How to play") { [weak self] _ in
+                self?.presentFullScreen(TutorialViewController())
+            },
+            UIAction(title: "More") { [weak self] _ in
+                self?.presentAbout()
+            },
+            UIAction(title: "Settings") { [weak self] _ in
+                self?.presentSettings()
+            },
+        ])
+        menuButton.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(titleLabel)
         view.addSubview(playButton)
+        view.addSubview(menuButton)
 
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -180),
+
             playButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 90),
             playButton.widthAnchor.constraint(equalToConstant: 100),
             playButton.heightAnchor.constraint(equalToConstant: 100),
+
+            menuButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            menuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            menuButton.widthAnchor.constraint(equalToConstant: 48),
+            menuButton.heightAnchor.constraint(equalToConstant: 48),
         ])
     }
 
@@ -39,5 +63,26 @@ final class StartViewController: UIViewController {
         game.modalPresentationStyle = .fullScreen
         game.modalPresentationCapturesStatusBarAppearance = true
         present(game, animated: true)
+    }
+
+    private func presentFullScreen(_ viewController: UIViewController) {
+        viewController.modalPresentationStyle = .fullScreen
+        viewController.modalTransitionStyle = .crossDissolve
+        viewController.modalPresentationCapturesStatusBarAppearance = true
+        present(viewController, animated: true)
+    }
+
+    private func presentAbout() {
+        let nav = UINavigationController(rootViewController: AboutViewController())
+        nav.modalPresentationStyle = .fullScreen
+        nav.modalPresentationCapturesStatusBarAppearance = true
+        present(nav, animated: true)
+    }
+
+    private func presentSettings() {
+        let nav = UINavigationController(rootViewController: SettingsViewController())
+        nav.modalPresentationStyle = .fullScreen
+        nav.modalPresentationCapturesStatusBarAppearance = true
+        present(nav, animated: true)
     }
 }
