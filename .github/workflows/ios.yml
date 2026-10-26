@@ -31,13 +31,37 @@ jobs:
           xcodebuild -project Game2048.xcodeproj -scheme Game2048 \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath build \
+            ENABLE_DEBUG_DYLIB=NO \
             build
 
       - name: Launch and screenshot
         run: |
           xcrun simctl bootstatus "iPhone 16" -b
-          xcrun simctl install "iPhone 16" App/build/Build/Products/Debug-iphonesimulator/Game2048.app
+          APP=App/build/Build/Products/Debug-iphonesimulator/Game2048.app
+          xcrun simctl install "iPhone 16" "$APP"
+          set +e
           xcrun simctl launch "iPhone 16" com.duofuwang.game2048
+          STATUS=$?
+          set -e
+          if [ $STATUS -ne 0 ]; then
+            echo "launch failed with $STATUS"
+            echo "=== app contents ==="
+            ls -la "$APP"
+            echo "=== Info.plist ==="
+            plutil -p "$APP/Info.plist"
+            echo "=== codesign ==="
+            codesign -dv "$APP" 2>&1 | head -20
+            echo "=== crash reports ==="
+            ls -lt ~/Library/Logs/DiagnosticReports | head -10 || true
+            for f in $(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do
+              echo "--- $f"
+              head -80 "$f"
+            done
+            echo "=== simulator log ==="
+            xcrun simctl spawn "iPhone 16" log show --last 2m --style compact \
+              --predicate 'eventMessage CONTAINS[c] "Game2048"' | tail -60 || true
+            exit $STATUS
+          fi
           sleep 3
           mkdir -p artifacts
           xcrun simctl io "iPhone 16" screenshot artifacts/launch.png
