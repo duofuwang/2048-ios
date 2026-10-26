@@ -104,12 +104,15 @@ final class BoardView: UIView {
 
         for x in 0..<GameEngine.sizeX {
             for y in 0..<GameEngine.sizeY {
+                theme.cellColor(for: 0).setFill()
+                context.fill(cellRect(x, y))
+            }
+        }
+
+        for x in 0..<GameEngine.sizeX {
+            for y in 0..<GameEngine.sizeY {
                 let cell = cellRect(x, y)
-                guard let tile = engine.grid.field[x][y] else {
-                    theme.cellColor(for: 0).setFill()
-                    context.fill(cell)
-                    continue
-                }
+                guard let tile = engine.grid.field[x][y] else { continue }
 
                 var animated = false
                 let animations = engine.animationGrid.animations(at: x, y)
