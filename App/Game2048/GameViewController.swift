@@ -4,14 +4,16 @@ import Game2048Core
 
 final class GameViewController: UIViewController {
     private let store = GameStore()
-    private let theme = Theme.current
+    private var theme = Theme.current
     private var engine: GameEngine!
     private var boardView: BoardView!
+    private var scoreTitleLabel: UILabel!
     private var scoreValueLabel: UILabel!
     private var soundButton: UIButton!
     private var audioPlayer: AVAudioPlayer?
     private var swipe: SwipeInput!
     private var toastLabel: UILabel?
+    private var gameOverOverlay: GameOverOverlay?
     private var backgroundObserver: NSObjectProtocol?
 
     override var prefersStatusBarHidden: Bool { true }
@@ -22,7 +24,12 @@ final class GameViewController: UIViewController {
 
         engine = GameEngine(highScore: store.highScore)
         engine.delegate = self
-        if ProcessInfo.processInfo.arguments.contains("-seedBoard") {
+        if ProcessInfo.processInfo.arguments.contains("-showGameOver") {
+            engine.restore(GameSnapshot(
+                board: Self.seededBoard, score: 676, maxMerged: 32,
+                highScore: 676, won: false, lose: true
+            ))
+        } else if ProcessInfo.processInfo.arguments.contains("-seedBoard") {
             engine.restore(GameSnapshot(
                 board: Self.seededBoard, score: 300, maxMerged: 128,
                 highScore: 500, won: false, lose: false
@@ -36,6 +43,10 @@ final class GameViewController: UIViewController {
         setupGestures()
         updateScore()
         boardView.startAnimating()
+        if ProcessInfo.processInfo.arguments.contains("-showGameOver") {
+            swipe.isLocked = true
+            showGameOver()
+        }
 
         backgroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
@@ -60,6 +71,7 @@ final class GameViewController: UIViewController {
         scoreTitle.font = thinFont(25)
         scoreTitle.textAlignment = .center
         scoreTitle.translatesAutoresizingMaskIntoConstraints = false
+        scoreTitleLabel = scoreTitle
 
         let scoreValue = UILabel()
         scoreValue.textColor = theme.scoreColor
@@ -76,16 +88,22 @@ final class GameViewController: UIViewController {
 
         let newGame = imageButton(defaultName: "re_default", pressName: "re_press", action: #selector(newGameTapped))
         let pause = imageButton(defaultName: "pause_default", pressName: "pause_press", action: #selector(pauseTapped))
+        let themeSwitch = imageButton(defaultName: "theme_default", pressName: "theme_press", action: #selector(themeTapped))
+        themeSwitch.isHidden = !store.themeQuickSwitch
         let sound = imageButton(defaultName: "vol_default", pressName: "vol_press", action: #selector(soundTapped))
         soundButton = sound
         updateSoundButton()
 
+        let buttons = UIStackView(arrangedSubviews: [newGame, pause, themeSwitch, sound])
+        buttons.axis = .horizontal
+        buttons.distribution = .equalSpacing
+        buttons.alignment = .center
+        buttons.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(scoreTitle)
         view.addSubview(scoreValue)
         view.addSubview(board)
-        view.addSubview(newGame)
-        view.addSubview(pause)
-        view.addSubview(sound)
+        view.addSubview(buttons)
 
         let safe = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
@@ -99,23 +117,18 @@ final class GameViewController: UIViewController {
             board.topAnchor.constraint(equalTo: scoreValue.bottomAnchor, constant: 8),
             board.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             board.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            board.bottomAnchor.constraint(equalTo: newGame.topAnchor, constant: -8),
+            board.bottomAnchor.constraint(equalTo: buttons.topAnchor, constant: -8),
 
-            newGame.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            newGame.bottomAnchor.constraint(equalTo: safe.bottomAnchor, constant: -8),
-            newGame.widthAnchor.constraint(equalToConstant: 70),
-            newGame.heightAnchor.constraint(equalToConstant: 70),
-
-            pause.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            pause.centerYAnchor.constraint(equalTo: newGame.centerYAnchor),
-            pause.widthAnchor.constraint(equalToConstant: 70),
-            pause.heightAnchor.constraint(equalToConstant: 70),
-
-            sound.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            sound.centerYAnchor.constraint(equalTo: newGame.centerYAnchor),
-            sound.widthAnchor.constraint(equalToConstant: 70),
-            sound.heightAnchor.constraint(equalToConstant: 70),
+            buttons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            buttons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            buttons.bottomAnchor.constraint(equalTo: safe.bottomAnchor, constant: -8),
+            buttons.heightAnchor.constraint(equalToConstant: 70),
         ])
+
+        for button in [newGame, pause, themeSwitch, sound] {
+            button.widthAnchor.constraint(equalToConstant: 70).isActive = true
+            button.heightAnchor.constraint(equalToConstant: 70).isActive = true
+        }
     }
 
     private func setupAudio() {
@@ -178,6 +191,15 @@ final class GameViewController: UIViewController {
         audioPlayer.play()
     }
 
+    private func applyTheme(_ theme: Theme) {
+        self.theme = theme
+        store.theme = theme
+        view.backgroundColor = theme.backgroundColor
+        scoreTitleLabel.textColor = theme.scoreColor
+        scoreValueLabel.textColor = theme.scoreColor
+        boardView.applyTheme(theme)
+    }
+
     private func startNewGame() {
         engine.newGame()
         store.snapshot = engine.snapshot()
@@ -218,6 +240,34 @@ final class GameViewController: UIViewController {
         }
     }
 
+    private func showGameOver() {
+        gameOverOverlay?.removeFromSuperview()
+        let overlay = GameOverOverlay(score: engine.score, highScore: engine.highScore)
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.onRestart = { [weak self] in
+            self?.gameOverOverlay?.removeFromSuperview()
+            self?.gameOverOverlay = nil
+            self?.startNewGame()
+        }
+        overlay.onShare = { [weak self] in
+            self?.shareScore()
+        }
+        view.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        gameOverOverlay = overlay
+    }
+
+    private func shareScore() {
+        let text = "I just scored \(engine.score) points in 2048."
+        let controller = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        present(controller, animated: true)
+    }
+
     @objc private func newGameTapped() {
         let alert = UIAlertController(
             title: "Start\na new Game?",
@@ -229,6 +279,16 @@ final class GameViewController: UIViewController {
             self?.startNewGame()
         })
         present(alert, animated: true)
+    }
+
+    @objc private func themeTapped() {
+        let next: Theme
+        switch theme {
+        case .holo: next = .dark
+        case .dark: next = .classic
+        case .classic: next = .holo
+        }
+        applyTheme(next)
     }
 
     @objc private func pauseTapped() {
@@ -286,15 +346,8 @@ extension GameViewController: GameEngineDelegate {
     func gameEngineDidEnd(_ engine: GameEngine) {
         store.snapshot = engine.snapshot()
         swipe.isLocked = true
-        let alert = UIAlertController(
-            title: "Game Over!",
-            message: "High Score: \(engine.highScore)\nScore: \(engine.score)",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "New Game", style: .default) { [weak self] _ in
-            self?.startNewGame()
-        })
-        present(alert, animated: true)
+        boardView.isUserInteractionEnabled = false
+        showGameOver()
     }
 }
 

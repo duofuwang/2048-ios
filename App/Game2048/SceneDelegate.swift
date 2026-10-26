@@ -10,8 +10,15 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        if ProcessInfo.processInfo.arguments.contains("-showGame") {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-showGame") {
             window.rootViewController = GameViewController()
+        } else if arguments.contains("-showTutorial") {
+            window.rootViewController = TutorialViewController()
+        } else if arguments.contains("-showSettings") {
+            window.rootViewController = UINavigationController(rootViewController: SettingsViewController())
+        } else if arguments.contains("-showAbout") {
+            window.rootViewController = UINavigationController(rootViewController: AboutViewController())
         } else {
             window.rootViewController = StartViewController()
         }

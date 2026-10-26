@@ -16,6 +16,17 @@ struct GameStore {
 
     var sensitivity: Double {
         get { defaults.object(forKey: "pref_sensitivity") == nil ? 0.7 : defaults.double(forKey: "pref_sensitivity") }
+        nonmutating set { defaults.set(newValue, forKey: "pref_sensitivity") }
+    }
+
+    var theme: Theme {
+        get { Theme.current }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: "pref_theme") }
+    }
+
+    var themeQuickSwitch: Bool {
+        get { defaults.bool(forKey: "pref_themebutton") }
+        nonmutating set { defaults.set(newValue, forKey: "pref_themebutton") }
     }
 
     var snapshot: GameSnapshot? {

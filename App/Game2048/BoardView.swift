@@ -3,7 +3,7 @@ import Game2048Core
 
 final class BoardView: UIView {
     private let engine: GameEngine
-    private let theme: Theme
+    private var theme: Theme
     private var displayLink: CADisplayLink?
     private var lastTick: CFTimeInterval = 0
     private var tileImages: [Int: UIImage] = [:]
@@ -54,6 +54,13 @@ final class BoardView: UIView {
         let link = CADisplayLink(target: self, selector: #selector(step))
         link.add(to: .main, forMode: .common)
         displayLink = link
+    }
+
+    func applyTheme(_ theme: Theme) {
+        self.theme = theme
+        backgroundColor = theme.backgroundColor
+        tileImages.removeAll()
+        setNeedsDisplay()
     }
 
     @objc private func step(_ link: CADisplayLink) {
