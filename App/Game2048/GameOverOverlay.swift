@@ -37,8 +37,10 @@ final class GameOverOverlay: UIView {
         scoreLabel.textAlignment = .center
 
         let restart = button(defaultName: "re_default", pressName: "re_press")
+        restart.accessibilityIdentifier = "restartButton"
         restart.addTarget(self, action: #selector(restartTapped), for: .touchUpInside)
         let share = button(defaultName: "share_default", pressName: "share_press")
+        share.accessibilityIdentifier = "shareButton"
         share.addTarget(self, action: #selector(shareTapped), for: .touchUpInside)
 
         let row = UIStackView(arrangedSubviews: [restart, share])

@@ -25,14 +25,13 @@ jobs:
         working-directory: App
         run: xcodegen generate
 
-      - name: Build
+      - name: Build and run UI tests
         working-directory: App
         run: |
-          xcodebuild -project Game2048.xcodeproj -scheme Game2048 \
+          xcodebuild test -project Game2048.xcodeproj -scheme Game2048 \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath build \
-            ENABLE_DEBUG_DYLIB=NO \
-            build
+            ENABLE_DEBUG_DYLIB=NO
 
       - name: Launch and screenshot
         run: |
