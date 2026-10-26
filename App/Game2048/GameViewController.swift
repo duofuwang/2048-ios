@@ -10,7 +10,8 @@ final class GameViewController: UIViewController {
     private var scoreTitleLabel: UILabel!
     private var scoreValueLabel: UILabel!
     private var soundButton: UIButton!
-    private var audioPlayer: AVAudioPlayer?
+    private var audioPlayers: [AVAudioPlayer] = []
+    private var nextAudioPlayer = 0
     private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
     private var toastLabel: UILabel?
@@ -150,10 +151,13 @@ final class GameViewController: UIViewController {
         try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true)
         guard let url = Bundle.main.url(forResource: "merge", withExtension: "mp3") else { return }
-        audioPlayer = try? AVAudioPlayer(contentsOf: url)
-        audioPlayer?.enableRate = true
-        audioPlayer?.rate = 1.8
-        audioPlayer?.prepareToPlay()
+        for _ in 0..<8 {
+            guard let player = try? AVAudioPlayer(contentsOf: url) else { continue }
+            player.enableRate = true
+            player.rate = 1.8
+            player.prepareToPlay()
+            audioPlayers.append(player)
+        }
     }
 
     private func setupGestures() {
@@ -201,12 +205,15 @@ final class GameViewController: UIViewController {
     }
 
     private func playMergeSound() {
-        guard store.soundVolume > 0, let audioPlayer else { return }
+        guard store.soundVolume > 0, !audioPlayers.isEmpty else { return }
         let volume = Float(store.soundVolume)
-        audioQueue.async {
-            audioPlayer.volume = volume
-            audioPlayer.currentTime = 0
-            audioPlayer.play()
+        audioQueue.async { [weak self] in
+            guard let self, !self.audioPlayers.isEmpty else { return }
+            let player = self.audioPlayers[self.nextAudioPlayer % self.audioPlayers.count]
+            self.nextAudioPlayer += 1
+            player.volume = volume
+            player.currentTime = 0
+            player.play()
         }
     }
 
