@@ -18,6 +18,9 @@ jobs:
       - name: Run core tests
         run: swift test --package-path Core
 
+      - name: Boot simulator
+        run: xcrun simctl boot "iPhone 16" || true
+
       - name: Generate project
         working-directory: App
         run: xcodegen generate
@@ -28,12 +31,10 @@ jobs:
           xcodebuild -project Game2048.xcodeproj -scheme Game2048 \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
             build
 
       - name: Launch and screenshot
         run: |
-          xcrun simctl boot "iPhone 16" || true
           xcrun simctl bootstatus "iPhone 16" -b
           xcrun simctl install "iPhone 16" App/build/Build/Products/Debug-iphonesimulator/Game2048.app
           xcrun simctl launch "iPhone 16" com.duofuwang.game2048
