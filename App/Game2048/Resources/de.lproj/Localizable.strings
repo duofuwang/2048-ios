@@ -6,6 +6,7 @@
 "start_new" = "Willst du wirklich \nein neues Spiel starten?";
 "discard" = "Das wird deinen \naktuellen Spielstand löschen!";
 "gameover" = "Game Over!";
+"score" = "Score";
 "tutorial" = "Wie wird gespielt?";
 "t1" = "Wische nach oben, unten, links oder rechts, um die Blöcke in die jeweilige Richtung zu schieben.";
 "t2" = "Wenn gleiche Blöcke sich berühren, werden diese zu einem größeren Block.";
@@ -14,7 +15,11 @@
 "pref_theme" = "Thema";
 "pref_themebutton" = "Schneller Themenwechsel";
 "slider_title" = "Sensitivität des Wischens";
+"cancel" = "Cancel";
 "sens_low" = "Träge";
 "sens_medium" = "Medium";
 "sens_high" = "Hoch";
 "sens_very_high" = "Sehr hoch";
+"theme_holo" = "Holo (Default)";
+"theme_dark" = "Dark";
+"theme_classic" = "Classic";

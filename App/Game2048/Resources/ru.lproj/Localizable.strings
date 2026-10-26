@@ -13,6 +13,13 @@
 "t3" = "Ваша цель — собрать плитку 2048!";
 "bol" = "Удачи!";
 "pref_theme" = "Тема";
+"pref_themebutton" = "Theme Quick Switch";
+"slider_title" = "Swipe Sensitivity";
+"cancel" = "Cancel";
+"sens_low" = "Low";
+"sens_medium" = "Medium";
+"sens_high" = "High";
+"sens_very_high" = "Very High";
 "theme_holo" = "Holo (По умолчанию))";
 "theme_dark" = "Тёмная";
 "theme_classic" = "Классическая";

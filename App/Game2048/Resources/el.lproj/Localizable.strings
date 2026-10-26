@@ -13,3 +13,13 @@
 "t3" = "Ο στόχος σας είναι να δημιουργήσετε πλακίδιο με αριθμό 2048!";
 "bol" = "Καλή τύχη!";
 "pref_theme" = "Θέμα";
+"pref_themebutton" = "Theme Quick Switch";
+"slider_title" = "Swipe Sensitivity";
+"cancel" = "Cancel";
+"sens_low" = "Low";
+"sens_medium" = "Medium";
+"sens_high" = "High";
+"sens_very_high" = "Very High";
+"theme_holo" = "Holo (Default)";
+"theme_dark" = "Dark";
+"theme_classic" = "Classic";
