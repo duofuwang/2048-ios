@@ -10,14 +10,17 @@ final class GameViewController: UIViewController {
     private var scoreTitleLabel: UILabel!
     private var scoreValueLabel: UILabel!
     private var soundButton: UIButton!
-    private var audioPlayers: [AVAudioPlayer] = []
-    private var nextAudioPlayer = 0
+    private let audioEngine = AVAudioEngine()
+    private var mergeBuffer: AVAudioPCMBuffer?
+    private var playerNodes: [AVAudioPlayerNode] = []
+    private var nextNode = 0
     private var mergeSoundIndex = 0
     private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
     private var toastLabel: UILabel?
     private var gameOverOverlay: GameOverOverlay?
     private var backgroundObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
 
     override var prefersStatusBarHidden: Bool { true }
 
@@ -67,6 +70,15 @@ final class GameViewController: UIViewController {
             guard let self else { return }
             self.store.highScore = self.engine.highScore
             self.store.snapshot = self.engine.snapshot()
+            self.audioEngine.pause()
+        }
+
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.resumeAudioEngine()
         }
     }
 
@@ -74,6 +86,10 @@ final class GameViewController: UIViewController {
         if let observer = backgroundObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        if let observer = foregroundObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        audioEngine.stop()
     }
 
     private func buildInterface() {
@@ -152,11 +168,38 @@ final class GameViewController: UIViewController {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true)
-        guard let url = Bundle.main.url(forResource: "merge_fast", withExtension: "mp3") else { return }
+
+        guard let url = Bundle.main.url(forResource: "merge_fast", withExtension: "mp3"),
+              let file = try? AVAudioFile(forReading: url),
+              let buffer = AVAudioPCMBuffer(
+                  pcmFormat: file.processingFormat,
+                  frameCapacity: AVAudioFrameCount(file.length)
+              ) else {
+            return
+        }
+        try? file.read(into: buffer)
+        mergeBuffer = buffer
+
         for _ in 0..<8 {
-            guard let player = try? AVAudioPlayer(contentsOf: url) else { continue }
-            player.prepareToPlay()
-            audioPlayers.append(player)
+            let node = AVAudioPlayerNode()
+            audioEngine.attach(node)
+            audioEngine.connect(node, to: audioEngine.mainMixerNode, format: buffer.format)
+            playerNodes.append(node)
+        }
+        audioEngine.prepare()
+        try? audioEngine.start()
+        playerNodes.forEach { $0.play() }
+    }
+
+    private func resumeAudioEngine() {
+        try? AVAudioSession.sharedInstance().setActive(true)
+        if !audioEngine.isRunning {
+            try? audioEngine.start()
+        }
+        playerNodes.forEach { node in
+            if !node.isPlaying {
+                node.play()
+            }
         }
     }
 
@@ -204,15 +247,17 @@ final class GameViewController: UIViewController {
     }
 
     private func playMergeSound(after delay: TimeInterval) {
-        guard store.soundVolume > 0, !audioPlayers.isEmpty else { return }
+        guard store.soundVolume > 0, let buffer = mergeBuffer, !playerNodes.isEmpty else { return }
         let volume = Float(store.soundVolume)
         audioQueue.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self, !self.audioPlayers.isEmpty else { return }
-            let player = self.audioPlayers[self.nextAudioPlayer % self.audioPlayers.count]
-            self.nextAudioPlayer += 1
-            player.volume = volume
-            player.currentTime = 0
-            player.play()
+            guard let self, !self.playerNodes.isEmpty else { return }
+            let node = self.playerNodes[self.nextNode % self.playerNodes.count]
+            self.nextNode += 1
+            node.volume = volume
+            node.scheduleBuffer(buffer, at: nil, options: [.interrupts], completionHandler: nil)
+            if !node.isPlaying {
+                node.play()
+            }
         }
     }
 
