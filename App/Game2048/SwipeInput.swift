@@ -19,13 +19,15 @@ final class SwipeInput {
     private var startingY: CGFloat = 0
     private var previousDirection = 1
     private var veryLastDirection = 1
+    private var movedInGesture = false
 
-    // Thresholds come from the Android source in pixels on a 1080-wide screen.
+    // Android thresholds are pixels on a 1080-wide screen; UIKit pan deltas are
+    // coarser, so both are scaled down and a short swipe is accepted on lift.
     init(sensitivity: Double, referenceWidth: CGFloat) {
         let pixelScale = referenceWidth / 1080
         let sens = CGFloat(10 + sensitivity * 50)
-        swipeThreshold = (70 - sens) * pixelScale
-        moveThreshold = 300 * pixelScale
+        swipeThreshold = (70 - sens) * pixelScale * 0.6
+        moveThreshold = 150 * pixelScale
     }
 
     func began(at point: CGPoint) {
@@ -37,6 +39,7 @@ final class SwipeInput {
         previousY = y
         lastdx = 0
         lastdy = 0
+        movedInGesture = false
     }
 
     func changed(to point: CGPoint) {
@@ -93,6 +96,7 @@ final class SwipeInput {
             }
 
             if moved {
+                movedInGesture = true
                 startingX = x
                 startingY = y
             }
@@ -102,9 +106,27 @@ final class SwipeInput {
         previousY = y
     }
 
-    func ended() {
+    func ended(at point: CGPoint) {
+        x = point.x
+        y = point.y
+        if !movedInGesture {
+            let dx = x - startingX
+            let dy = y - startingY
+            if max(abs(dx), abs(dy)) >= 20 {
+                if abs(dx) >= abs(dy) {
+                    onMove?(dx > 0 ? .right : .left)
+                } else {
+                    onMove?(dy > 0 ? .down : .up)
+                }
+            }
+        }
+        cancelled()
+    }
+
+    func cancelled() {
         previousDirection = 1
         veryLastDirection = 1
+        movedInGesture = false
     }
 
     private func pathMoved() -> CGFloat {

@@ -171,8 +171,10 @@ final class GameViewController: UIViewController {
             swipe.began(at: point)
         case .changed:
             swipe.changed(to: point)
-        case .ended, .cancelled, .failed:
-            swipe.ended()
+        case .ended:
+            swipe.ended(at: point)
+        case .cancelled, .failed:
+            swipe.cancelled()
         default:
             break
         }
@@ -182,8 +184,8 @@ final class GameViewController: UIViewController {
         guard !engine.lose else { return }
         let moved = engine.move(direction)
         if moved {
-            store.snapshot = engine.snapshot()
             boardView.startAnimating()
+            store.snapshot = engine.snapshot()
         }
     }
 

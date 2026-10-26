@@ -7,6 +7,7 @@ final class BoardView: UIView {
     private var displayLink: CADisplayLink?
     private var lastTick: CFTimeInterval = 0
     private var tileImages: [Int: UIImage] = [:]
+    private var boardBackground: UIImage?
     private var cellSize: CGFloat = 0
     private let gridWidth: CGFloat = 2
     private var boardOrigin = CGPoint.zero
@@ -56,7 +57,22 @@ final class BoardView: UIView {
             y: (bounds.height - total) / 2 + gridWidth
         )
         tileImages.removeAll()
+        boardBackground = renderBackground()
         setNeedsDisplay()
+    }
+
+    private func renderBackground() -> UIImage? {
+        guard bounds.width > 0, bounds.height > 0, cellSize > 0 else { return nil }
+        return UIGraphicsImageRenderer(bounds: bounds).image { context in
+            theme.backgroundColor.setFill()
+            context.fill(bounds)
+            for x in 0..<GameEngine.sizeX {
+                for y in 0..<GameEngine.sizeY {
+                    theme.cellColor(for: 0).setFill()
+                    context.fill(cellRect(x, y))
+                }
+            }
+        }
     }
 
     func startAnimating() {
@@ -66,6 +82,7 @@ final class BoardView: UIView {
         }
         lastTick = CACurrentMediaTime()
         let link = CADisplayLink(target: self, selector: #selector(step))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 60, preferred: 60)
         link.add(to: .main, forMode: .common)
         displayLink = link
     }
@@ -74,6 +91,7 @@ final class BoardView: UIView {
         self.theme = theme
         backgroundColor = theme.backgroundColor
         tileImages.removeAll()
+        boardBackground = renderBackground()
         setNeedsDisplay()
     }
 
@@ -99,14 +117,11 @@ final class BoardView: UIView {
 
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext(), cellSize > 0 else { return }
-        theme.backgroundColor.setFill()
-        context.fill(bounds)
-
-        for x in 0..<GameEngine.sizeX {
-            for y in 0..<GameEngine.sizeY {
-                theme.cellColor(for: 0).setFill()
-                context.fill(cellRect(x, y))
-            }
+        if let boardBackground {
+            boardBackground.draw(in: bounds)
+        } else {
+            theme.backgroundColor.setFill()
+            context.fill(bounds)
         }
 
         for x in 0..<GameEngine.sizeX {
