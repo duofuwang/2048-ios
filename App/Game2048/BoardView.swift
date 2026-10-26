@@ -56,9 +56,16 @@ final class BoardView: UIView {
             x: (bounds.width - total) / 2 + gridWidth,
             y: (bounds.height - total) / 2 + gridWidth
         )
-        tileImages.removeAll()
-        boardBackground = renderBackground()
+        prepareImages()
         setNeedsDisplay()
+    }
+
+    private func prepareImages() {
+        tileImages.removeAll()
+        for power in 1...12 {
+            _ = image(for: 1 << power)
+        }
+        boardBackground = renderBackground()
     }
 
     private func renderBackground() -> UIImage? {
@@ -90,8 +97,7 @@ final class BoardView: UIView {
     func applyTheme(_ theme: Theme) {
         self.theme = theme
         backgroundColor = theme.backgroundColor
-        tileImages.removeAll()
-        boardBackground = renderBackground()
+        prepareImages()
         setNeedsDisplay()
     }
 
