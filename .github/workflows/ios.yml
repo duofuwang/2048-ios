@@ -65,6 +65,10 @@ jobs:
           sleep 3
           mkdir -p artifacts
           xcrun simctl io "iPhone 16" screenshot artifacts/launch.png
+          xcrun simctl terminate "iPhone 16" com.duofuwang.game2048 || true
+          xcrun simctl launch "iPhone 16" com.duofuwang.game2048 -showGame -seedBoard
+          sleep 3
+          xcrun simctl io "iPhone 16" screenshot artifacts/game.png
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,12 +1,11 @@
 import UIKit
 
 final class StartViewController: UIViewController {
-    private let backgroundBlue = UIColor(red: 0x20 / 255, green: 0x81 / 255, blue: 0xE4 / 255, alpha: 1)
-    private let buttonGreen = UIColor(red: 0x8B / 255, green: 0xC3 / 255, blue: 0x4A / 255, alpha: 1)
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = backgroundBlue
+        view.backgroundColor = UIColor(hex: 0x2081E4)
 
         let titleLabel = UILabel()
         titleLabel.text = "2048"
@@ -15,11 +14,11 @@ final class StartViewController: UIViewController {
             ?? UIFont.systemFont(ofSize: 96, weight: .ultraLight)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let playButton = UIButton(type: .system)
-        playButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        playButton.tintColor = .white
-        playButton.backgroundColor = buttonGreen
-        playButton.layer.cornerRadius = 50
+        let playButton = UIButton(type: .custom)
+        playButton.setImage(UIImage(named: "play_default"), for: .normal)
+        playButton.setImage(UIImage(named: "play_press"), for: .highlighted)
+        playButton.imageView?.contentMode = .scaleAspectFit
+        playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
         playButton.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(titleLabel)
@@ -27,11 +26,18 @@ final class StartViewController: UIViewController {
 
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -100),
+            titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -180),
             playButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 100),
+            playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 90),
             playButton.widthAnchor.constraint(equalToConstant: 100),
             playButton.heightAnchor.constraint(equalToConstant: 100),
         ])
+    }
+
+    @objc private func playTapped() {
+        let game = GameViewController()
+        game.modalPresentationStyle = .fullScreen
+        game.modalPresentationCapturesStatusBarAppearance = true
+        present(game, animated: true)
     }
 }

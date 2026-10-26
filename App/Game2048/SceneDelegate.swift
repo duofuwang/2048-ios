@@ -10,7 +10,11 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = StartViewController()
+        if ProcessInfo.processInfo.arguments.contains("-showGame") {
+            window.rootViewController = GameViewController()
+        } else {
+            window.rootViewController = StartViewController()
+        }
         window.makeKeyAndVisible()
         self.window = window
     }
