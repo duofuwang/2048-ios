@@ -11,6 +11,7 @@ final class Game2048UITests: XCTestCase {
     private func waitForBoard(_ app: XCUIApplication) -> XCUIElement {
         let board = app.otherElements["board"]
         XCTAssertTrue(board.waitForExistence(timeout: 15))
+        RunLoop.current.run(until: Date().addingTimeInterval(1))
         return board
     }
 
@@ -29,6 +30,22 @@ final class Game2048UITests: XCTestCase {
         return condition()
     }
 
+    private func drag(_ board: XCUIElement, from: CGVector, to: CGVector) {
+        let start = board.coordinate(withNormalizedOffset: from)
+        let end = board.coordinate(withNormalizedOffset: to)
+        start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
+    }
+
+    private func dragUntil(_ board: XCUIElement, from: CGVector, to: CGVector, condition: () -> Bool) -> Bool {
+        for _ in 0..<3 {
+            drag(board, from: from, to: to)
+            if waitUntil(timeout: 4, condition) {
+                return true
+            }
+        }
+        return condition()
+    }
+
     private func nonZeroCount(_ value: String) -> Int {
         value
             .split(separator: ";")
@@ -42,20 +59,28 @@ final class Game2048UITests: XCTestCase {
         let board = waitForBoard(app)
         let before = boardValue(board)
 
-        app.swipeRight()
+        let changed = dragUntil(
+            board,
+            from: CGVector(dx: 0.2, dy: 0.5),
+            to: CGVector(dx: 0.8, dy: 0.5)
+        ) { self.boardValue(board) != before }
 
-        XCTAssertTrue(waitUntil { boardValue(board) != before }, "board did not change after swipe")
+        XCTAssertTrue(changed, "board did not change after swipe")
     }
 
     func testMergeUpdatesScore() {
         let app = launch(["-showGame", "-seedMerge"])
-        _ = waitForBoard(app)
+        let board = waitForBoard(app)
         let score = app.staticTexts["scoreLabel"]
         XCTAssertTrue(score.waitForExistence(timeout: 10))
 
-        app.swipeLeft()
+        let merged = dragUntil(
+            board,
+            from: CGVector(dx: 0.8, dy: 0.5),
+            to: CGVector(dx: 0.2, dy: 0.5)
+        ) { score.label == "4" }
 
-        XCTAssertTrue(waitUntil { score.label == "4" }, "score did not become 4, got \(score.label)")
+        XCTAssertTrue(merged, "score did not become 4, got \(score.label)")
     }
 
     func testNewGameResetsBoard() {
@@ -69,7 +94,7 @@ final class Game2048UITests: XCTestCase {
 
         let board = waitForBoard(app)
         XCTAssertTrue(
-            waitUntil { nonZeroCount(boardValue(board)) == 2 },
+            waitUntil { self.nonZeroCount(self.boardValue(board)) == 2 },
             "new board has \(nonZeroCount(boardValue(board))) tiles"
         )
     }
@@ -79,8 +104,12 @@ final class Game2048UITests: XCTestCase {
         let board = waitForBoard(app)
         let before = boardValue(board)
 
-        app.swipeRight()
-        XCTAssertTrue(waitUntil { boardValue(board) != before })
+        let changed = dragUntil(
+            board,
+            from: CGVector(dx: 0.2, dy: 0.5),
+            to: CGVector(dx: 0.8, dy: 0.5)
+        ) { self.boardValue(board) != before }
+        XCTAssertTrue(changed)
         let moved = boardValue(board)
 
         app.terminate()
@@ -88,6 +117,6 @@ final class Game2048UITests: XCTestCase {
         app.launch()
 
         let relaunched = waitForBoard(app)
-        XCTAssertTrue(waitUntil { boardValue(relaunched) == moved }, "board state was not restored")
+        XCTAssertTrue(waitUntil { self.boardValue(relaunched) == moved }, "board state was not restored")
     }
 }
