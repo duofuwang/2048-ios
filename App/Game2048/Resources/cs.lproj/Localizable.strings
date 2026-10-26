@@ -15,7 +15,11 @@
 "pref_theme" = "Téma";
 "pref_themebutton" = "Rychlá změna vzhledu";
 "slider_title" = "Citlivost posouvání";
+"cancel" = "Cancel";
 "sens_low" = "Nízká";
 "sens_medium" = "Střední";
 "sens_high" = "Vysoká";
 "sens_very_high" = "Velmi vysoká";
+"theme_holo" = "Holo (Default)";
+"theme_dark" = "Dark";
+"theme_classic" = "Classic";

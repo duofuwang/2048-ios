@@ -13,6 +13,13 @@
 "t3" = "Il tuo obiettivo è raggiungere 2048!";
 "bol" = "Buon divertimento!";
 "pref_theme" = "Tema";
+"pref_themebutton" = "Theme Quick Switch";
+"slider_title" = "Swipe Sensitivity";
+"cancel" = "Cancel";
+"sens_low" = "Low";
+"sens_medium" = "Medium";
+"sens_high" = "High";
+"sens_very_high" = "Very High";
 "theme_holo" = "Holo (Predefinito)";
 "theme_dark" = "Scuro";
 "theme_classic" = "Classico";
