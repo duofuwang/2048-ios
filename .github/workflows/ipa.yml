@@ -1,0 +1,50 @@
+name: Build IPA
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: App
+        run: xcodegen generate
+
+      - name: Archive
+        working-directory: App
+        run: |
+          xcodebuild archive \
+            -project Game2048.xcodeproj \
+            -scheme Game2048 \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Game2048.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            ENABLE_DEBUG_DYLIB=NO
+
+      - name: Package unsigned IPA
+        working-directory: App
+        run: |
+          mkdir -p build/Payload
+          cp -R build/Game2048.xcarchive/Products/Applications/Game2048.app build/Payload/
+          cd build
+          zip -qry 2048-unsigned.ipa Payload
+          ls -lh 2048-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 2048-ipa
+          path: App/build/2048-unsigned.ipa
