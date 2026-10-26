@@ -64,6 +64,7 @@ final class GameViewController: UIViewController {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
+            self.store.highScore = self.engine.highScore
             self.store.snapshot = self.engine.snapshot()
         }
     }
@@ -189,6 +190,7 @@ final class GameViewController: UIViewController {
         guard !engine.lose else { return }
         boardView.startAnimating()
         let moved = engine.move(direction)
+        updateScore()
         if moved {
             store.snapshot = engine.snapshot()
         }
@@ -328,6 +330,7 @@ final class GameViewController: UIViewController {
     }
 
     @objc private func pauseTapped() {
+        store.highScore = engine.highScore
         store.snapshot = engine.snapshot()
         dismiss(animated: true)
     }
@@ -375,7 +378,6 @@ final class GameViewController: UIViewController {
 
 extension GameViewController: GameEngineDelegate {
     func gameEngine(_ engine: GameEngine, didMerge value: Int) {
-        updateScore()
         playMergeSound()
     }
 
@@ -386,12 +388,10 @@ extension GameViewController: GameEngineDelegate {
     }
 
     func gameEngine(_ engine: GameEngine, didUpdateHighScore value: Int) {
-        DispatchQueue.main.async { [weak self] in
-            self?.store.highScore = value
-        }
     }
 
     func gameEngineDidEnd(_ engine: GameEngine) {
+        store.highScore = engine.highScore
         store.snapshot = engine.snapshot()
         swipe.isLocked = true
         boardView.isUserInteractionEnabled = false
