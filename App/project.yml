@@ -1,0 +1,37 @@
+name: Game2048
+options:
+  bundleIdPrefix: com.duofuwang
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  Game2048:
+    type: application
+    platform: iOS
+    sources:
+      - path: Game2048
+    dependencies:
+      - package: Game2048Core
+    info:
+      path: Game2048/Info.plist
+      properties:
+        CFBundleDisplayName: "2048"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIRequiresFullScreen: true
+packages:
+  Game2048Core:
+    path: ../Core
+schemes:
+  Game2048:
+    build:
+      targets:
+        Game2048: all
+    run:
+      config: Debug
