@@ -112,7 +112,9 @@ final class GameEngineTests: XCTestCase {
             [0, 0, 0, 0],
         ])
         engine.move(.left)
-        XCTAssertEqual(rows(of: engine)[0], [4, 2, 0, 0])
+        let board = rows(of: engine)
+        XCTAssertEqual(board[0], [4, 0, 0, 0])
+        XCTAssertEqual(board[1][0], 2)
         XCTAssertEqual(engine.score, 4)
     }
 
