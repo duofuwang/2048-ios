@@ -3,6 +3,7 @@
 DerivedData/
 build/
 artifacts/
+dist/
 xcuserdata/
 *.xcodeproj/
 App/Game2048/Info.plist
