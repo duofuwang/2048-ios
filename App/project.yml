@@ -8,6 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_DEBUG_DYLIB: NO
 targets:
   Game2048:
     type: application
