@@ -17,6 +17,9 @@ targets:
       - path: Game2048
     dependencies:
       - package: Game2048Core
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.duofuwang.game2048
     info:
       path: Game2048/Info.plist
       properties:
