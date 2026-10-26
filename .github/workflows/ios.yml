@@ -1,0 +1,48 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run core tests
+        run: swift test --package-path Core
+
+      - name: Generate project
+        working-directory: App
+        run: xcodegen generate
+
+      - name: Build
+        working-directory: App
+        run: |
+          xcodebuild -project Game2048.xcodeproj -scheme Game2048 \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Launch and screenshot
+        run: |
+          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl bootstatus "iPhone 16" -b
+          xcrun simctl install "iPhone 16" App/build/Build/Products/Debug-iphonesimulator/Game2048.app
+          xcrun simctl launch "iPhone 16" com.duofuwang.game2048
+          sleep 3
+          mkdir -p artifacts
+          xcrun simctl io "iPhone 16" screenshot artifacts/launch.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshot
+          path: artifacts
