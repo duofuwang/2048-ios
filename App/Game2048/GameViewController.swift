@@ -152,11 +152,9 @@ final class GameViewController: UIViewController {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true)
-        guard let url = Bundle.main.url(forResource: "merge", withExtension: "mp3") else { return }
+        guard let url = Bundle.main.url(forResource: "merge_fast", withExtension: "mp3") else { return }
         for _ in 0..<8 {
             guard let player = try? AVAudioPlayer(contentsOf: url) else { continue }
-            player.enableRate = true
-            player.rate = 1.8
             player.prepareToPlay()
             audioPlayers.append(player)
         }
