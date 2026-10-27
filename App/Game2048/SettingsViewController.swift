@@ -260,8 +260,7 @@ extension SettingsViewController: UITableViewDataSource {
 }
 
 private final class SensitivityCell: UITableViewCell {
-    private let slider = UISlider()
-    private let valueLabel = UILabel()
+    private let slider = TickSlider()
     var onChange: ((Double) -> Void)?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -272,22 +271,39 @@ private final class SensitivityCell: UITableViewCell {
         title.text = NSLocalizedString("slider_title", comment: "")
         title.font = .systemFont(ofSize: 17)
 
-        valueLabel.font = .systemFont(ofSize: 17)
-        valueLabel.textColor = .secondaryLabel
+        let slow = UIImageView(image: UIImage(
+            systemName: "tortoise",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .regular)
+        ))
+        slow.tintColor = .secondaryLabel
+        slow.setContentHuggingPriority(.required, for: .horizontal)
+
+        let fast = UIImageView(image: UIImage(
+            systemName: "hare",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .regular)
+        ))
+        fast.tintColor = .secondaryLabel
+        fast.setContentHuggingPriority(.required, for: .horizontal)
 
         slider.minimumValue = 0
         slider.maximumValue = 1
+        slider.accessibilityLabel = NSLocalizedString("slider_title", comment: "")
         slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
 
-        let stack = UIStackView(arrangedSubviews: [title, slider, valueLabel])
+        let row = UIStackView(arrangedSubviews: [slow, slider, fast])
+        row.axis = .horizontal
+        row.spacing = 12
+        row.alignment = .center
+
+        let stack = UIStackView(arrangedSubviews: [title, row])
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
         ])
     }
@@ -298,24 +314,71 @@ private final class SensitivityCell: UITableViewCell {
 
     func configure(value: Double) {
         slider.value = Float(value)
-        updateLabel()
+        slider.snapToTick()
+        updateAccessibilityValue()
     }
 
     @objc private func sliderChanged() {
-        updateLabel()
+        slider.snapToTick()
+        updateAccessibilityValue()
         onChange?(Double(slider.value))
     }
 
-    private func updateLabel() {
-        let value = slider.value
-        if value < 0.25 {
-            valueLabel.text = NSLocalizedString("sens_low", comment: "")
-        } else if value < 0.5 {
-            valueLabel.text = NSLocalizedString("sens_medium", comment: "")
-        } else if value < 0.75 {
-            valueLabel.text = NSLocalizedString("sens_high", comment: "")
-        } else {
-            valueLabel.text = NSLocalizedString("sens_very_high", comment: "")
+    private func updateAccessibilityValue() {
+        let key: String
+        switch Int((slider.value * 3).rounded()) {
+        case 0: key = "sens_low"
+        case 1: key = "sens_medium"
+        case 2: key = "sens_high"
+        default: key = "sens_very_high"
         }
+        slider.accessibilityValue = NSLocalizedString(key, comment: "")
+    }
+}
+
+private final class TickSlider: UISlider {
+    private let tickCount = 4
+    private var step: Float { Float(1) / Float(tickCount - 1) }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        setNeedsDisplay()
+    }
+
+    override func draw(_ rect: CGRect) {
+        let track = trackRect(forBounds: bounds)
+        let radius: CGFloat = 2
+        UIColor.tertiaryLabel.setFill()
+        for index in 0..<tickCount {
+            let x = track.minX + track.width * CGFloat(index) / CGFloat(tickCount - 1)
+            UIBezierPath(ovalIn: CGRect(
+                x: x - radius,
+                y: track.maxY + 4,
+                width: radius * 2,
+                height: radius * 2
+            )).fill()
+        }
+        super.draw(rect)
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            setNeedsDisplay()
+        }
+    }
+
+    func snapToTick() {
+        value = (value / step).rounded() * step
+    }
+
+    override func accessibilityIncrement() {
+        setValue(min(maximumValue, value + step), animated: false)
+        sendActions(for: .valueChanged)
+    }
+
+    override func accessibilityDecrement() {
+        setValue(max(minimumValue, value - step), animated: false)
+        sendActions(for: .valueChanged)
     }
 }
