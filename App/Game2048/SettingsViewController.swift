@@ -29,6 +29,7 @@ final class SettingsViewController: UIViewController {
         tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
+        tableView.delaysContentTouches = false
         tableView.register(SensitivityCell.self, forCellReuseIdentifier: "sensitivity")
         view.addSubview(tableView)
         NSLayoutConstraint.activate([
@@ -424,6 +425,11 @@ private final class TickSlider: UIControl {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        layoutContent()
+        setNeedsDisplay()
+    }
+
+    private func layoutContent() {
         let track = trackFrame
         trackView.frame = track
         let x = thumbCenterX(forFraction: positionFraction)
@@ -443,7 +449,6 @@ private final class TickSlider: UIControl {
             cornerRadius: thumbHeight / 2
         ).cgPath
         glassView.frame = thumbView.bounds
-        setNeedsDisplay()
     }
 
     override func draw(_ rect: CGRect) {
@@ -486,8 +491,7 @@ private final class TickSlider: UIControl {
         guard clamped != selectedIndex else { return }
         selectedIndex = clamped
         positionFraction = CGFloat(clamped) / CGFloat(tickCount - 1)
-        setNeedsLayout()
-        layoutIfNeeded()
+        layoutContent()
     }
 
     private func updatePosition(at x: CGFloat) {
@@ -500,12 +504,11 @@ private final class TickSlider: UIControl {
             feedback.prepare()
             sendActions(for: .valueChanged)
         }
-        setNeedsLayout()
-        layoutIfNeeded()
+        layoutContent()
     }
 
     private func setDragging(_ dragging: Bool) {
-        let scale: CGFloat = dragging ? 1.8 : 1
+        let scale: CGFloat = dragging ? 1.5 : 1
         UIView.animate(
             withDuration: 0.15,
             delay: 0,
@@ -555,8 +558,7 @@ private final class TickSlider: UIControl {
         guard next != selectedIndex else { return }
         selectedIndex = next
         positionFraction = CGFloat(next) / CGFloat(tickCount - 1)
-        setNeedsLayout()
-        layoutIfNeeded()
+        layoutContent()
         feedback.selectionChanged()
         sendActions(for: .valueChanged)
     }
@@ -566,8 +568,7 @@ private final class TickSlider: UIControl {
         guard previous != selectedIndex else { return }
         selectedIndex = previous
         positionFraction = CGFloat(previous) / CGFloat(tickCount - 1)
-        setNeedsLayout()
-        layoutIfNeeded()
+        layoutContent()
         feedback.selectionChanged()
         sendActions(for: .valueChanged)
     }
