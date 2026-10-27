@@ -25,6 +25,7 @@ targets:
       path: Game2048/Info.plist
       properties:
         CFBundleDisplayName: "2048"
+        CADisableMinimumFrameDurationOnPhone: true
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

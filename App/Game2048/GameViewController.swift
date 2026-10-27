@@ -17,6 +17,8 @@ final class GameViewController: UIViewController {
     private var mergeSoundIndex = 0
     private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
+    private var hapticPolicy: HapticPolicy!
+    private let hapticFeedback = HapticFeedback()
     private var toastLabel: UILabel?
     private var gameOverOverlay: GameOverOverlay?
     private var backgroundObserver: NSObjectProtocol?
@@ -30,6 +32,7 @@ final class GameViewController: UIViewController {
 
         engine = GameEngine(highScore: store.highScore)
         engine.delegate = self
+        var restoringGame = false
         if ProcessInfo.processInfo.arguments.contains("-showGameOver") {
             engine.restore(GameSnapshot(
                 board: Self.seededBoard, score: 676, maxMerged: 32,
@@ -47,6 +50,17 @@ final class GameViewController: UIViewController {
             ))
         } else if let snapshot = store.snapshot {
             engine.restore(snapshot)
+            restoringGame = true
+        }
+
+        hapticPolicy = HapticPolicy(
+            isEnabled: store.hapticsEnabled,
+            intensity: store.hapticIntensity,
+            trigger: store.hapticTrigger,
+            seenValues: restoringGame ? store.hapticSeenValues : []
+        )
+        if !restoringGame {
+            store.hapticSeenValues = []
         }
 
         buildInterface()
@@ -68,8 +82,7 @@ final class GameViewController: UIViewController {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            self.store.highScore = self.engine.highScore
-            self.store.snapshot = self.engine.snapshot()
+            self.saveGameState()
             self.audioEngine.pause()
             try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
         }
@@ -232,10 +245,22 @@ final class GameViewController: UIViewController {
 
     private func performMove(_ direction: Direction) {
         guard !engine.lose else { return }
+        hapticPolicy.beginMove()
+        if hapticPolicy.isEnabled {
+            hapticFeedback.prepare(intensity: hapticPolicy.intensity)
+        }
         boardView.startAnimating()
         mergeSoundIndex = 0
         engine.move(direction)
         updateScore()
+        hapticFeedback.perform(hapticPolicy.endMove())
+    }
+
+    private func saveGameState() {
+        store.highScore = engine.highScore
+        store.hapticSeenValues = hapticPolicy.seenValues
+        store.snapshot = engine.snapshot()
+        hapticFeedback.cancel()
     }
 
     private func updateScore() {
@@ -273,6 +298,12 @@ final class GameViewController: UIViewController {
     }
 
     private func startNewGame() {
+        hapticPolicy.resetGame()
+        hapticPolicy.isEnabled = store.hapticsEnabled
+        hapticPolicy.intensity = store.hapticIntensity
+        hapticPolicy.trigger = store.hapticTrigger
+        store.hapticSeenValues = []
+        hapticFeedback.cancel()
         engine.newGame()
         store.snapshot = engine.snapshot()
         swipe.isLocked = false
@@ -374,8 +405,7 @@ final class GameViewController: UIViewController {
     }
 
     @objc private func pauseTapped() {
-        store.highScore = engine.highScore
-        store.snapshot = engine.snapshot()
+        saveGameState()
         dismiss(animated: true)
     }
 
@@ -422,6 +452,7 @@ final class GameViewController: UIViewController {
 
 extension GameViewController: GameEngineDelegate {
     func gameEngine(_ engine: GameEngine, didMerge value: Int) {
+        hapticPolicy.mergeDidOccur(value: value)
         let delay = Double(mergeSoundIndex) * 0.012
         mergeSoundIndex += 1
         playMergeSound(after: delay)
@@ -437,8 +468,7 @@ extension GameViewController: GameEngineDelegate {
     }
 
     func gameEngineDidEnd(_ engine: GameEngine) {
-        store.highScore = engine.highScore
-        store.snapshot = engine.snapshot()
+        saveGameState()
         swipe.isLocked = true
         boardView.isUserInteractionEnabled = false
         showGameOver()
