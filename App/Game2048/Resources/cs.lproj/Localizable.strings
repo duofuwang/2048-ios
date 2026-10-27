@@ -16,6 +16,7 @@
 "pref_themebutton" = "Rychlá změna vzhledu";
 "slider_title" = "Citlivost posouvání";
 "cancel" = "Cancel";
+"pref_respect_silent" = "Respect Silent Mode";
 "sens_low" = "Nízká";
 "sens_medium" = "Střední";
 "sens_high" = "Vysoká";

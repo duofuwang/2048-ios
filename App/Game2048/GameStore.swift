@@ -29,6 +29,15 @@ struct GameStore {
         nonmutating set { defaults.set(newValue, forKey: "pref_themebutton") }
     }
 
+    var respectSilentMode: Bool {
+        get {
+            defaults.object(forKey: "pref_respect_silent") == nil
+                ? true
+                : defaults.bool(forKey: "pref_respect_silent")
+        }
+        nonmutating set { defaults.set(newValue, forKey: "pref_respect_silent") }
+    }
+
     var snapshot: GameSnapshot? {
         get {
             guard let data = defaults.data(forKey: "game snapshot") else { return nil }

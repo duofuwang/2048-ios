@@ -167,7 +167,8 @@ final class GameViewController: UIViewController {
 
     private func setupAudio() {
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+        let category: AVAudioSession.Category = store.respectSilentMode ? .ambient : .playback
+        try? session.setCategory(category, mode: .default, options: [.mixWithOthers])
         try? session.setActive(true)
 
         guard let url = Bundle.main.url(forResource: "merge_fast", withExtension: "mp3"),
