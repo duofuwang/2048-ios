@@ -364,9 +364,16 @@ private final class TickSlider: UIControl {
     private let trackView = UIView()
     private let fillView = UIView()
     private let thumbView = UIView()
+    private let glassView: UIVisualEffectView = {
+        if #available(iOS 26.0, *) {
+            return UIVisualEffectView(effect: UIGlassEffect())
+        }
+        return UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
+    }()
     private let feedback = UISelectionFeedbackGenerator()
 
     private(set) var selectedIndex = 0
+    private var positionFraction: CGFloat = 0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -394,6 +401,12 @@ private final class TickSlider: UIControl {
         thumbView.layer.shadowOffset = CGSize(width: 0, height: 1)
         thumbView.isUserInteractionEnabled = false
         addSubview(thumbView)
+
+        glassView.isHidden = true
+        glassView.isUserInteractionEnabled = false
+        glassView.layer.cornerRadius = thumbSize / 2
+        glassView.clipsToBounds = true
+        thumbView.addSubview(glassView)
     }
 
     required init?(coder: NSCoder) {
@@ -413,7 +426,7 @@ private final class TickSlider: UIControl {
         super.layoutSubviews()
         let track = trackFrame
         trackView.frame = track
-        let x = thumbCenterX(for: selectedIndex)
+        let x = thumbCenterX(forFraction: positionFraction)
         fillView.frame = CGRect(
             x: track.minX,
             y: track.minY,
@@ -427,6 +440,7 @@ private final class TickSlider: UIControl {
             height: thumbSize
         )
         thumbView.layer.shadowPath = UIBezierPath(ovalIn: thumbView.bounds).cgPath
+        glassView.frame = thumbView.bounds
         setNeedsDisplay()
     }
 
@@ -458,52 +472,79 @@ private final class TickSlider: UIControl {
     }
 
     private func thumbCenterX(for index: Int) -> CGFloat {
-        thumbSize / 2 + thumbTravel * CGFloat(index) / CGFloat(tickCount - 1)
+        thumbCenterX(forFraction: CGFloat(index) / CGFloat(tickCount - 1))
+    }
+
+    private func thumbCenterX(forFraction fraction: CGFloat) -> CGFloat {
+        thumbSize / 2 + thumbTravel * fraction
     }
 
     func setSelectedIndex(_ index: Int) {
         let clamped = min(max(index, 0), tickCount - 1)
         guard clamped != selectedIndex else { return }
         selectedIndex = clamped
+        positionFraction = CGFloat(clamped) / CGFloat(tickCount - 1)
         setNeedsLayout()
         layoutIfNeeded()
     }
 
-    private func updateIndex(at x: CGFloat) {
+    private func updatePosition(at x: CGFloat) {
         guard thumbTravel > 0 else { return }
-        let fraction = (x - thumbSize / 2) / thumbTravel
-        let clamped = min(max(fraction, 0), 1)
-        let index = Int((clamped * CGFloat(tickCount - 1)).rounded())
-        guard index != selectedIndex else { return }
-        selectedIndex = index
+        positionFraction = min(max((x - thumbSize / 2) / thumbTravel, 0), 1)
+        let index = Int((positionFraction * CGFloat(tickCount - 1)).rounded())
+        if index != selectedIndex {
+            selectedIndex = index
+            feedback.selectionChanged()
+            feedback.prepare()
+            sendActions(for: .valueChanged)
+        }
         setNeedsLayout()
         layoutIfNeeded()
-        feedback.selectionChanged()
-        feedback.prepare()
-        sendActions(for: .valueChanged)
+    }
+
+    private func setDragging(_ dragging: Bool) {
+        thumbView.backgroundColor = dragging ? .clear : .white
+        glassView.isHidden = !dragging
+    }
+
+    private func snapToTick() {
+        positionFraction = CGFloat(selectedIndex) / CGFloat(tickCount - 1)
+        setNeedsLayout()
+        UIView.animate(withDuration: 0.12, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
+            self.layoutIfNeeded()
+        }
     }
 
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        setDragging(true)
         feedback.prepare()
-        updateIndex(at: touch.location(in: self).x)
+        updatePosition(at: touch.location(in: self).x)
         return true
     }
 
     override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        updateIndex(at: touch.location(in: self).x)
+        updatePosition(at: touch.location(in: self).x)
         return true
     }
 
     override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
         if let touch {
-            updateIndex(at: touch.location(in: self).x)
+            updatePosition(at: touch.location(in: self).x)
         }
+        setDragging(false)
+        snapToTick()
+    }
+
+    override func cancelTracking(with event: UIEvent?) {
+        setDragging(false)
+        snapToTick()
     }
 
     override func accessibilityIncrement() {
         let next = min(tickCount - 1, selectedIndex + 1)
         guard next != selectedIndex else { return }
         selectedIndex = next
+        positionFraction = CGFloat(next) / CGFloat(tickCount - 1)
         setNeedsLayout()
         layoutIfNeeded()
         feedback.selectionChanged()
@@ -514,6 +555,7 @@ private final class TickSlider: UIControl {
         let previous = max(0, selectedIndex - 1)
         guard previous != selectedIndex else { return }
         selectedIndex = previous
+        positionFraction = CGFloat(previous) / CGFloat(tickCount - 1)
         setNeedsLayout()
         layoutIfNeeded()
         feedback.selectionChanged()
