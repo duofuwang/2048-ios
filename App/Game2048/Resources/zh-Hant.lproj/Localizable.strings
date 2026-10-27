@@ -16,6 +16,7 @@
 "pref_themebutton" = "主題快速換";
 "slider_title" = "滑動靈敏度";
 "cancel" = "Cancel";
+"pref_respect_silent" = "尊重靜音模式";
 "sens_low" = "還可以";
 "sens_medium" = "恩, 不錯!";
 "sens_high" = "讚喔!";

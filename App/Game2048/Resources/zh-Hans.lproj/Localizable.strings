@@ -16,6 +16,7 @@
 "pref_themebutton" = "主题快捷切换";
 "slider_title" = "滑动灵敏度";
 "cancel" = "取消";
+"pref_respect_silent" = "尊重静音模式";
 "sens_low" = "低";
 "sens_medium" = "中";
 "sens_high" = "高";

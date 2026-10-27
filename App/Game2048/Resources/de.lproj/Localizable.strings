@@ -16,6 +16,7 @@
 "pref_themebutton" = "Schneller Themenwechsel";
 "slider_title" = "Sensitivität des Wischens";
 "cancel" = "Cancel";
+"pref_respect_silent" = "Respect Silent Mode";
 "sens_low" = "Träge";
 "sens_medium" = "Medium";
 "sens_high" = "Hoch";

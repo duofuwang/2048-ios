@@ -34,6 +34,10 @@ final class SettingsViewController: UIViewController {
         store.themeQuickSwitch = sender.isOn
     }
 
+    @objc private func respectSilentChanged(_ sender: UISwitch) {
+        store.respectSilentMode = sender.isOn
+    }
+
     private func chooseTheme() {
         let alert = UIAlertController(
             title: NSLocalizedString("pref_theme", comment: ""),
@@ -61,7 +65,7 @@ final class SettingsViewController: UIViewController {
 
 extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        3
+        4
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -82,6 +86,16 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
             cell.accessoryView = toggle
             return cell
         default:
+            if indexPath.row == 3 {
+                let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+                cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
+                cell.selectionStyle = .none
+                let toggle = UISwitch()
+                toggle.isOn = store.respectSilentMode
+                toggle.addTarget(self, action: #selector(respectSilentChanged(_:)), for: .valueChanged)
+                cell.accessoryView = toggle
+                return cell
+            }
             let cell = tableView.dequeueReusableCell(withIdentifier: "sensitivity", for: indexPath) as! SensitivityCell
             cell.configure(value: store.sensitivity)
             cell.onChange = { [weak self] value in

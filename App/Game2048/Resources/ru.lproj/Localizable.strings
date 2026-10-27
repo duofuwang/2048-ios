@@ -16,6 +16,7 @@
 "pref_themebutton" = "Theme Quick Switch";
 "slider_title" = "Swipe Sensitivity";
 "cancel" = "Cancel";
+"pref_respect_silent" = "Respect Silent Mode";
 "sens_low" = "Low";
 "sens_medium" = "Medium";
 "sens_high" = "High";
