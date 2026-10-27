@@ -30,6 +30,7 @@
 "pref_appearance" = "Appearance";
 "pref_controls" = "Controls";
 "pref_sound" = "Sound";
+"pref_game_sound" = "Game Sound";
 "sens_low" = "Nízká";
 "sens_medium" = "Střední";
 "sens_high" = "Vysoká";

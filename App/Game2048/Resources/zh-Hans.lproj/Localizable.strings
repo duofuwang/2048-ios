@@ -30,6 +30,7 @@
 "pref_appearance" = "外观";
 "pref_controls" = "操作";
 "pref_sound" = "声音";
+"pref_game_sound" = "游戏声音";
 "sens_low" = "低";
 "sens_medium" = "中";
 "sens_high" = "高";

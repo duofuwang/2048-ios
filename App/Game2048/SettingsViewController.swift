@@ -51,6 +51,10 @@ final class SettingsViewController: UIViewController {
         store.respectSilentMode = sender.isOn
     }
 
+    @objc private func gameSoundChanged(_ sender: UISwitch) {
+        store.soundVolume = sender.isOn ? 1 : 0
+    }
+
     @objc private func hapticsSwitchChanged(_ sender: UISwitch) {
         store.hapticsEnabled = sender.isOn
         tableView.reloadSections(IndexSet(integer: Section.haptics.rawValue), with: .none)
@@ -170,6 +174,17 @@ final class SettingsViewController: UIViewController {
         return cell
     }
 
+    private func gameSoundCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = NSLocalizedString("pref_game_sound", comment: "")
+        cell.selectionStyle = .none
+        let toggle = UISwitch()
+        toggle.isOn = store.soundVolume > 0
+        toggle.addTarget(self, action: #selector(gameSoundChanged(_:)), for: .valueChanged)
+        cell.accessoryView = toggle
+        return cell
+    }
+
     private func silentModeCell() -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
@@ -224,7 +239,7 @@ extension SettingsViewController: UITableViewDataSource {
         switch section {
         case .appearance: return 2
         case .controls: return 1
-        case .sound: return 1
+        case .sound: return 2
         case .haptics: return 3
         }
     }
@@ -252,7 +267,7 @@ extension SettingsViewController: UITableViewDataSource {
             }
             return cell
         case .sound:
-            return silentModeCell()
+            return indexPath.row == 0 ? gameSoundCell() : silentModeCell()
         case .haptics:
             return hapticsCell(row: indexPath.row)
         }
