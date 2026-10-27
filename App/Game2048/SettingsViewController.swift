@@ -329,13 +329,14 @@ private final class SensitivityCell: UITableViewCell {
     }
 
     func configure(value: Double) {
-        currentIndex = Int((value * 3).rounded())
-        slider.setTick(currentIndex)
+        let index = min(max(Int((value * 3).rounded()), 0), 3)
+        currentIndex = index
+        slider.setSelectedIndex(index)
         updateAccessibilityValue()
     }
 
     @objc private func sliderChanged() {
-        let index = slider.tickIndex
+        let index = slider.selectedIndex
         guard index != currentIndex else { return }
         currentIndex = index
         updateAccessibilityValue()
@@ -354,95 +355,161 @@ private final class SensitivityCell: UITableViewCell {
     }
 }
 
-private final class TickSlider: UISlider {
+private final class TickSlider: UIControl {
     private let tickCount = 4
-    private let edgeInset: Float = 0.05
+    private let trackHeight: CGFloat = 4
+    private let thumbSize: CGFloat = 28
+    private let tickRadius: CGFloat = 2
 
-    private var tickFractions: [Float] {
-        let span = 1 - 2 * edgeInset
-        return (0..<tickCount).map { edgeInset + Float($0) * span / Float(tickCount - 1) }
+    private let trackView = UIView()
+    private let fillView = UIView()
+    private let thumbView = UIView()
+    private let feedback = UISelectionFeedbackGenerator()
+
+    private(set) var selectedIndex = 0
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isAccessibilityElement = true
+        accessibilityTraits = .adjustable
+        feedback.prepare()
+
+        trackView.backgroundColor = .secondarySystemFill
+        trackView.layer.cornerRadius = trackHeight / 2
+        addSubview(trackView)
+
+        fillView.backgroundColor = tintColor
+        fillView.layer.cornerRadius = trackHeight / 2
+        addSubview(fillView)
+
+        thumbView.backgroundColor = .white
+        thumbView.layer.cornerRadius = thumbSize / 2
+        thumbView.layer.shadowColor = UIColor.black.cgColor
+        thumbView.layer.shadowOpacity = 0.15
+        thumbView.layer.shadowRadius = 3
+        thumbView.layer.shadowOffset = CGSize(width: 0, height: 1)
+        addSubview(thumbView)
     }
 
-    var tickIndex: Int {
-        let fractions = tickFractions
-        return fractions.enumerated().min {
-            abs($0.element - value) < abs($1.element - value)
-        }?.offset ?? 0
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
-    func setTick(_ index: Int) {
-        value = tickFractions[min(max(index, 0), tickCount - 1)]
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: 31)
     }
 
-    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        isHighlighted = true
-        updateValue(for: touch)
-        return true
-    }
-
-    override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        updateValue(for: touch)
-        return true
-    }
-
-    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
-        isHighlighted = false
-        if let touch {
-            updateValue(for: touch)
-        }
-    }
-
-    override func cancelTracking(with event: UIEvent?) {
-        isHighlighted = false
-    }
-
-    private func updateValue(for touch: UITouch) {
-        let track = trackRect(forBounds: bounds)
-        guard track.width > 0 else { return }
-        let fraction = Float((touch.location(in: self).x - track.minX) / track.width)
-        let clamped = min(max(fraction, edgeInset), 1 - edgeInset)
-        let fractions = tickFractions
-        let snapped = fractions.min { abs($0 - clamped) < abs($1 - clamped) } ?? fractions[0]
-        guard snapped != value else { return }
-        value = snapped
-        sendActions(for: .valueChanged)
+    override func tintColorDidChange() {
+        super.tintColorDidChange()
+        fillView.backgroundColor = tintColor
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        let track = trackFrame
+        trackView.frame = track
+        let x = thumbCenterX(for: selectedIndex)
+        fillView.frame = CGRect(
+            x: track.minX,
+            y: track.minY,
+            width: max(0, x - track.minX),
+            height: track.height
+        )
+        thumbView.frame = CGRect(
+            x: x - thumbSize / 2,
+            y: bounds.midY - thumbSize / 2,
+            width: thumbSize,
+            height: thumbSize
+        )
+        thumbView.layer.shadowPath = UIBezierPath(ovalIn: thumbView.bounds).cgPath
         setNeedsDisplay()
     }
 
     override func draw(_ rect: CGRect) {
-        let track = trackRect(forBounds: bounds)
-        let radius: CGFloat = 2
+        let track = trackFrame
         UIColor.tertiaryLabel.setFill()
-        for fraction in tickFractions {
-            let x = track.minX + track.width * CGFloat(fraction)
+        for index in 0..<tickCount {
+            let x = thumbCenterX(for: index)
             UIBezierPath(ovalIn: CGRect(
-                x: x - radius,
+                x: x - tickRadius,
                 y: track.maxY + 4,
-                width: radius * 2,
-                height: radius * 2
+                width: tickRadius * 2,
+                height: tickRadius * 2
             )).fill()
         }
-        super.draw(rect)
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            setNeedsDisplay()
+    private var trackFrame: CGRect {
+        let inset = thumbSize / 2
+        return CGRect(
+            x: inset,
+            y: bounds.midY - trackHeight / 2,
+            width: max(0, bounds.width - inset * 2),
+            height: trackHeight
+        )
+    }
+
+    private func thumbCenterX(for index: Int) -> CGFloat {
+        trackFrame.minX + trackFrame.width * CGFloat(index) / CGFloat(tickCount - 1)
+    }
+
+    func setSelectedIndex(_ index: Int) {
+        let clamped = min(max(index, 0), tickCount - 1)
+        guard clamped != selectedIndex else { return }
+        selectedIndex = clamped
+        setNeedsLayout()
+        layoutIfNeeded()
+    }
+
+    private func updateIndex(at x: CGFloat) {
+        let track = trackFrame
+        guard track.width > 0 else { return }
+        let fraction = (x - track.minX) / track.width
+        let clamped = min(max(fraction, 0), 1)
+        let index = Int((clamped * CGFloat(tickCount - 1)).rounded())
+        guard index != selectedIndex else { return }
+        selectedIndex = index
+        setNeedsLayout()
+        layoutIfNeeded()
+        feedback.selectionChanged()
+        feedback.prepare()
+        sendActions(for: .valueChanged)
+    }
+
+    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        feedback.prepare()
+        updateIndex(at: touch.location(in: self).x)
+        return true
+    }
+
+    override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        updateIndex(at: touch.location(in: self).x)
+        return true
+    }
+
+    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
+        if let touch {
+            updateIndex(at: touch.location(in: self).x)
         }
     }
 
     override func accessibilityIncrement() {
-        setTick(min(tickCount - 1, tickIndex + 1))
+        let next = min(tickCount - 1, selectedIndex + 1)
+        guard next != selectedIndex else { return }
+        selectedIndex = next
+        setNeedsLayout()
+        layoutIfNeeded()
+        feedback.selectionChanged()
         sendActions(for: .valueChanged)
     }
 
     override func accessibilityDecrement() {
-        setTick(max(0, tickIndex - 1))
+        let previous = max(0, selectedIndex - 1)
+        guard previous != selectedIndex else { return }
+        selectedIndex = previous
+        setNeedsLayout()
+        layoutIfNeeded()
+        feedback.selectionChanged()
         sendActions(for: .valueChanged)
     }
 }
