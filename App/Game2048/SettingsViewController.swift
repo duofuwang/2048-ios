@@ -275,12 +275,8 @@ extension SettingsViewController: UITableViewDataSource {
 }
 
 private final class SensitivityCell: UITableViewCell {
-    private let control = UISegmentedControl(items: [
-        NSLocalizedString("sens_low", comment: ""),
-        NSLocalizedString("sens_medium", comment: ""),
-        NSLocalizedString("sens_high", comment: ""),
-        NSLocalizedString("sens_very_high", comment: "")
-    ])
+    private let slider = TickSlider()
+    private var currentIndex = -1
     var onChange: ((Double) -> Void)?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -307,9 +303,10 @@ private final class SensitivityCell: UITableViewCell {
         fast.setContentHuggingPriority(.required, for: .horizontal)
         fast.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        control.addTarget(self, action: #selector(controlChanged), for: .valueChanged)
+        slider.accessibilityLabel = NSLocalizedString("slider_title", comment: "")
+        slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
 
-        let row = UIStackView(arrangedSubviews: [slow, control, fast])
+        let row = UIStackView(arrangedSubviews: [slow, slider, fast])
         row.axis = .horizontal
         row.spacing = 12
         row.alignment = .center
@@ -332,12 +329,120 @@ private final class SensitivityCell: UITableViewCell {
     }
 
     func configure(value: Double) {
-        control.selectedSegmentIndex = Int((value * 3).rounded())
+        currentIndex = Int((value * 3).rounded())
+        slider.setTick(currentIndex)
+        updateAccessibilityValue()
     }
 
-    @objc private func controlChanged() {
-        let index = control.selectedSegmentIndex
-        guard index >= 0 else { return }
+    @objc private func sliderChanged() {
+        let index = slider.tickIndex
+        guard index != currentIndex else { return }
+        currentIndex = index
+        updateAccessibilityValue()
         onChange?(Double(index) / 3)
+    }
+
+    private func updateAccessibilityValue() {
+        let key: String
+        switch currentIndex {
+        case 0: key = "sens_low"
+        case 1: key = "sens_medium"
+        case 2: key = "sens_high"
+        default: key = "sens_very_high"
+        }
+        slider.accessibilityValue = NSLocalizedString(key, comment: "")
+    }
+}
+
+private final class TickSlider: UISlider {
+    private let tickCount = 4
+    private let edgeInset: Float = 0.05
+
+    private var tickFractions: [Float] {
+        let span = 1 - 2 * edgeInset
+        return (0..<tickCount).map { edgeInset + Float($0) * span / Float(tickCount - 1) }
+    }
+
+    var tickIndex: Int {
+        let fractions = tickFractions
+        return fractions.enumerated().min {
+            abs($0.element - value) < abs($1.element - value)
+        }?.offset ?? 0
+    }
+
+    func setTick(_ index: Int) {
+        value = tickFractions[min(max(index, 0), tickCount - 1)]
+    }
+
+    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        isHighlighted = true
+        updateValue(for: touch)
+        return true
+    }
+
+    override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        updateValue(for: touch)
+        return true
+    }
+
+    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
+        isHighlighted = false
+        if let touch {
+            updateValue(for: touch)
+        }
+    }
+
+    override func cancelTracking(with event: UIEvent?) {
+        isHighlighted = false
+    }
+
+    private func updateValue(for touch: UITouch) {
+        let track = trackRect(forBounds: bounds)
+        guard track.width > 0 else { return }
+        let fraction = Float((touch.location(in: self).x - track.minX) / track.width)
+        let clamped = min(max(fraction, edgeInset), 1 - edgeInset)
+        let fractions = tickFractions
+        let snapped = fractions.min { abs($0 - clamped) < abs($1 - clamped) } ?? fractions[0]
+        guard snapped != value else { return }
+        value = snapped
+        sendActions(for: .valueChanged)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        setNeedsDisplay()
+    }
+
+    override func draw(_ rect: CGRect) {
+        let track = trackRect(forBounds: bounds)
+        let radius: CGFloat = 2
+        UIColor.tertiaryLabel.setFill()
+        for fraction in tickFractions {
+            let x = track.minX + track.width * CGFloat(fraction)
+            UIBezierPath(ovalIn: CGRect(
+                x: x - radius,
+                y: track.maxY + 4,
+                width: radius * 2,
+                height: radius * 2
+            )).fill()
+        }
+        super.draw(rect)
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            setNeedsDisplay()
+        }
+    }
+
+    override func accessibilityIncrement() {
+        setTick(min(tickCount - 1, tickIndex + 1))
+        sendActions(for: .valueChanged)
+    }
+
+    override func accessibilityDecrement() {
+        setTick(max(0, tickIndex - 1))
+        sendActions(for: .valueChanged)
     }
 }
