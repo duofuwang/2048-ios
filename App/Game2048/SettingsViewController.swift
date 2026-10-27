@@ -1,9 +1,12 @@
 import UIKit
+import Game2048Core
 
 final class SettingsViewController: UIViewController {
     private let store = GameStore()
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let themes: [Theme] = [.holo, .dark, .classic]
+    private let hapticIntensities: [HapticIntensity] = [.light, .medium, .strong]
+    private let hapticTriggers: [HapticTrigger] = [.perMove, .perMerge, .onNewValue]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,20 +41,15 @@ final class SettingsViewController: UIViewController {
         store.respectSilentMode = sender.isOn
     }
 
-    private func chooseTheme() {
-        let alert = UIAlertController(
-            title: NSLocalizedString("pref_theme", comment: ""),
-            message: nil,
-            preferredStyle: .actionSheet
-        )
-        for theme in themes {
-            alert.addAction(UIAlertAction(title: name(of: theme), style: .default) { [weak self] _ in
-                self?.store.theme = theme
-                self?.tableView.reloadData()
-            })
-        }
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel))
-        present(alert, animated: true)
+    @objc private func hapticsSwitchChanged(_ sender: UISwitch) {
+        store.hapticsEnabled = sender.isOn
+        tableView.reloadSections(IndexSet(integer: 1), with: .none)
+    }
+
+    @objc private func hapticsIntensityChanged(_ sender: UISegmentedControl) {
+        let index = sender.selectedSegmentIndex
+        guard hapticIntensities.indices.contains(index) else { return }
+        store.hapticIntensity = hapticIntensities[index]
     }
 
     private func name(of theme: Theme) -> String {
@@ -61,20 +59,117 @@ final class SettingsViewController: UIViewController {
         case .classic: return NSLocalizedString("theme_classic", comment: "")
         }
     }
+
+    private func name(of intensity: HapticIntensity) -> String {
+        switch intensity {
+        case .light: return NSLocalizedString("pref_haptic_intensity_light", comment: "")
+        case .medium: return NSLocalizedString("pref_haptic_intensity_medium", comment: "")
+        case .strong: return NSLocalizedString("pref_haptic_intensity_strong", comment: "")
+        }
+    }
+
+    private func name(of trigger: HapticTrigger) -> String {
+        switch trigger {
+        case .perMove: return NSLocalizedString("pref_haptic_trigger_per_move", comment: "")
+        case .perMerge: return NSLocalizedString("pref_haptic_trigger_per_merge", comment: "")
+        case .onNewValue: return NSLocalizedString("pref_haptic_trigger_on_new_value", comment: "")
+        }
+    }
+
+    private func hapticsCell(row: Int) -> UITableViewCell {
+        switch row {
+        case 0:
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = NSLocalizedString("pref_haptics_enabled", comment: "")
+            cell.selectionStyle = .none
+            let toggle = UISwitch()
+            toggle.isOn = store.hapticsEnabled
+            toggle.addTarget(self, action: #selector(hapticsSwitchChanged(_:)), for: .valueChanged)
+            cell.accessoryView = toggle
+            return cell
+
+        case 1:
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = NSLocalizedString("pref_haptic_intensity", comment: "")
+            cell.textLabel?.textColor = store.hapticsEnabled ? .label : .secondaryLabel
+            cell.selectionStyle = .none
+            let control = UISegmentedControl(items: hapticIntensities.map { name(of: $0) })
+            control.selectedSegmentIndex = hapticIntensities.firstIndex(of: store.hapticIntensity) ?? 0
+            control.isEnabled = store.hapticsEnabled
+            control.alpha = store.hapticsEnabled ? 1 : 0.5
+            control.addTarget(self, action: #selector(hapticsIntensityChanged(_:)), for: .valueChanged)
+            cell.accessoryView = control
+            return cell
+
+        default:
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = NSLocalizedString("pref_haptic_trigger", comment: "")
+            cell.textLabel?.textColor = store.hapticsEnabled ? .label : .secondaryLabel
+            cell.selectionStyle = .none
+            let button = UIButton(type: .system)
+            button.setTitle(name(of: store.hapticTrigger), for: .normal)
+            button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+            button.semanticContentAttribute = .forceRightToLeft
+            button.showsMenuAsPrimaryAction = true
+            button.menu = UIMenu(children: hapticTriggers.map { trigger in
+                UIAction(
+                    title: name(of: trigger),
+                    state: store.hapticTrigger == trigger ? .on : .off
+                ) { [weak self] _ in
+                    self?.store.hapticTrigger = trigger
+                    self?.tableView.reloadSections(IndexSet(integer: 1), with: .none)
+                }
+            })
+            button.isEnabled = store.hapticsEnabled
+            button.alpha = store.hapticsEnabled ? 1 : 0.5
+            cell.accessoryView = button
+            return cell
+        }
+    }
 }
 
 extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        2
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        4
+        section == 0 ? 4 : 3
+    }
+
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        section == 1 ? NSLocalizedString("pref_haptics", comment: "") : nil
+    }
+
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        section == 1 ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.section == 1 {
+            return hapticsCell(row: indexPath.row)
+        }
+
         switch indexPath.row {
         case 0:
-            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.textLabel?.text = NSLocalizedString("pref_theme", comment: "")
-            cell.detailTextLabel?.text = name(of: store.theme)
-            cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .none
+            let button = UIButton(type: .system)
+            button.setTitle(name(of: store.theme), for: .normal)
+            button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+            button.semanticContentAttribute = .forceRightToLeft
+            button.showsMenuAsPrimaryAction = true
+            button.menu = UIMenu(children: themes.map { theme in
+                UIAction(
+                    title: name(of: theme),
+                    state: store.theme == theme ? .on : .off
+                ) { [weak self] _ in
+                    self?.store.theme = theme
+                    self?.tableView.reloadData()
+                }
+            })
+            cell.accessoryView = button
             return cell
         case 1:
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
@@ -85,30 +180,22 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
             toggle.addTarget(self, action: #selector(themeSwitchChanged(_:)), for: .valueChanged)
             cell.accessoryView = toggle
             return cell
+        case 3:
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
+            cell.selectionStyle = .none
+            let toggle = UISwitch()
+            toggle.isOn = store.respectSilentMode
+            toggle.addTarget(self, action: #selector(respectSilentChanged(_:)), for: .valueChanged)
+            cell.accessoryView = toggle
+            return cell
         default:
-            if indexPath.row == 3 {
-                let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-                cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
-                cell.selectionStyle = .none
-                let toggle = UISwitch()
-                toggle.isOn = store.respectSilentMode
-                toggle.addTarget(self, action: #selector(respectSilentChanged(_:)), for: .valueChanged)
-                cell.accessoryView = toggle
-                return cell
-            }
             let cell = tableView.dequeueReusableCell(withIdentifier: "sensitivity", for: indexPath) as! SensitivityCell
             cell.configure(value: store.sensitivity)
             cell.onChange = { [weak self] value in
                 self?.store.sensitivity = value
             }
             return cell
-        }
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        if indexPath.row == 0 {
-            chooseTheme()
         }
     }
 }

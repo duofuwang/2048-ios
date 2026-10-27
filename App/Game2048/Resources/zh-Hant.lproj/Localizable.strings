@@ -17,6 +17,17 @@
 "slider_title" = "滑動靈敏度";
 "cancel" = "Cancel";
 "pref_respect_silent" = "尊重靜音模式";
+"pref_haptics" = "震感回饋";
+"pref_haptics_enabled" = "啟用";
+"pref_haptic_intensity" = "強度";
+"pref_haptic_intensity_light" = "輕";
+"pref_haptic_intensity_medium" = "中";
+"pref_haptic_intensity_strong" = "強";
+"pref_haptic_trigger" = "觸發時機";
+"pref_haptic_trigger_per_move" = "每滑一次";
+"pref_haptic_trigger_per_merge" = "每處合併";
+"pref_haptic_trigger_on_new_value" = "合出新數值";
+"pref_haptics_footer" = "遵循系統觸感設定。";
 "sens_low" = "還可以";
 "sens_medium" = "恩, 不錯!";
 "sens_high" = "讚喔!";

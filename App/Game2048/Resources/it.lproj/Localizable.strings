@@ -17,6 +17,17 @@
 "slider_title" = "Swipe Sensitivity";
 "cancel" = "Cancel";
 "pref_respect_silent" = "Respect Silent Mode";
+"pref_haptics" = "Haptic Feedback";
+"pref_haptics_enabled" = "Enabled";
+"pref_haptic_intensity" = "Intensity";
+"pref_haptic_intensity_light" = "Light";
+"pref_haptic_intensity_medium" = "Medium";
+"pref_haptic_intensity_strong" = "Strong";
+"pref_haptic_trigger" = "Trigger";
+"pref_haptic_trigger_per_move" = "Once per swipe";
+"pref_haptic_trigger_per_merge" = "Every merge";
+"pref_haptic_trigger_on_new_value" = "New value";
+"pref_haptics_footer" = "Follows the system haptics setting.";
 "sens_low" = "Low";
 "sens_medium" = "Medium";
 "sens_high" = "High";
