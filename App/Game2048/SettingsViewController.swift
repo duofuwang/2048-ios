@@ -378,10 +378,12 @@ private final class TickSlider: UIControl {
 
         trackView.backgroundColor = .secondarySystemFill
         trackView.layer.cornerRadius = trackHeight / 2
+        trackView.isUserInteractionEnabled = false
         addSubview(trackView)
 
         fillView.backgroundColor = tintColor
         fillView.layer.cornerRadius = trackHeight / 2
+        fillView.isUserInteractionEnabled = false
         addSubview(fillView)
 
         thumbView.backgroundColor = .white
@@ -390,6 +392,7 @@ private final class TickSlider: UIControl {
         thumbView.layer.shadowOpacity = 0.15
         thumbView.layer.shadowRadius = 3
         thumbView.layer.shadowOffset = CGSize(width: 0, height: 1)
+        thumbView.isUserInteractionEnabled = false
         addSubview(thumbView)
     }
 
@@ -442,17 +445,20 @@ private final class TickSlider: UIControl {
     }
 
     private var trackFrame: CGRect {
-        let inset = thumbSize / 2
-        return CGRect(
-            x: inset,
+        CGRect(
+            x: 0,
             y: bounds.midY - trackHeight / 2,
-            width: max(0, bounds.width - inset * 2),
+            width: bounds.width,
             height: trackHeight
         )
     }
 
+    private var thumbTravel: CGFloat {
+        max(0, bounds.width - thumbSize)
+    }
+
     private func thumbCenterX(for index: Int) -> CGFloat {
-        trackFrame.minX + trackFrame.width * CGFloat(index) / CGFloat(tickCount - 1)
+        thumbSize / 2 + thumbTravel * CGFloat(index) / CGFloat(tickCount - 1)
     }
 
     func setSelectedIndex(_ index: Int) {
@@ -464,9 +470,8 @@ private final class TickSlider: UIControl {
     }
 
     private func updateIndex(at x: CGFloat) {
-        let track = trackFrame
-        guard track.width > 0 else { return }
-        let fraction = (x - track.minX) / track.width
+        guard thumbTravel > 0 else { return }
+        let fraction = (x - thumbSize / 2) / thumbTravel
         let clamped = min(max(fraction, 0), 1)
         let index = Int((clamped * CGFloat(tickCount - 1)).rounded())
         guard index != selectedIndex else { return }
