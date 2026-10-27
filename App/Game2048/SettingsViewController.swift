@@ -122,6 +122,7 @@ final class SettingsViewController: UIViewController {
             })
             button.isEnabled = store.hapticsEnabled
             button.alpha = store.hapticsEnabled ? 1 : 0.5
+            button.sizeToFit()
             cell.accessoryView = button
             return cell
         }
@@ -169,6 +170,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
                     self?.tableView.reloadData()
                 }
             })
+            button.sizeToFit()
             cell.accessoryView = button
             return cell
         case 1:
