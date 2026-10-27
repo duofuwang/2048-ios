@@ -357,9 +357,10 @@ private final class SensitivityCell: UITableViewCell {
 
 private final class TickSlider: UIControl {
     private let tickCount = 4
-    private let trackHeight: CGFloat = 4
-    private let thumbSize: CGFloat = 28
-    private let tickRadius: CGFloat = 2
+    private let trackHeight: CGFloat = 6
+    private let thumbWidth: CGFloat = 36
+    private let thumbHeight: CGFloat = 26
+    private let tickRadius: CGFloat = 1.33
 
     private let trackView = UIView()
     private let fillView = UIView()
@@ -383,28 +384,32 @@ private final class TickSlider: UIControl {
         accessibilityTraits = .adjustable
         feedback.prepare()
 
-        trackView.backgroundColor = .secondarySystemFill
+        trackView.backgroundColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(white: 0.23, alpha: 1)
+                : UIColor(white: 0.898, alpha: 1)
+        }
         trackView.layer.cornerRadius = trackHeight / 2
         trackView.isUserInteractionEnabled = false
         addSubview(trackView)
 
-        fillView.backgroundColor = tintColor
+        fillView.backgroundColor = UIColor(red: 59 / 255, green: 134 / 255, blue: 247 / 255, alpha: 1)
         fillView.layer.cornerRadius = trackHeight / 2
         fillView.isUserInteractionEnabled = false
         addSubview(fillView)
 
         thumbView.backgroundColor = .white
-        thumbView.layer.cornerRadius = thumbSize / 2
+        thumbView.layer.cornerRadius = thumbHeight / 2
         thumbView.layer.shadowColor = UIColor.black.cgColor
-        thumbView.layer.shadowOpacity = 0.15
-        thumbView.layer.shadowRadius = 3
+        thumbView.layer.shadowOpacity = 0.08
+        thumbView.layer.shadowRadius = 8
         thumbView.layer.shadowOffset = CGSize(width: 0, height: 1)
         thumbView.isUserInteractionEnabled = false
         addSubview(thumbView)
 
         glassView.isHidden = true
         glassView.isUserInteractionEnabled = false
-        glassView.layer.cornerRadius = thumbSize / 2
+        glassView.layer.cornerRadius = thumbHeight / 2
         glassView.clipsToBounds = true
         thumbView.addSubview(glassView)
     }
@@ -415,11 +420,6 @@ private final class TickSlider: UIControl {
 
     override var intrinsicContentSize: CGSize {
         CGSize(width: UIView.noIntrinsicMetric, height: 31)
-    }
-
-    override func tintColorDidChange() {
-        super.tintColorDidChange()
-        fillView.backgroundColor = tintColor
     }
 
     override func layoutSubviews() {
@@ -434,12 +434,15 @@ private final class TickSlider: UIControl {
             height: track.height
         )
         thumbView.frame = CGRect(
-            x: x - thumbSize / 2,
-            y: bounds.midY - thumbSize / 2,
-            width: thumbSize,
-            height: thumbSize
+            x: x - thumbWidth / 2,
+            y: bounds.midY - thumbHeight / 2,
+            width: thumbWidth,
+            height: thumbHeight
         )
-        thumbView.layer.shadowPath = UIBezierPath(ovalIn: thumbView.bounds).cgPath
+        thumbView.layer.shadowPath = UIBezierPath(
+            roundedRect: thumbView.bounds,
+            cornerRadius: thumbHeight / 2
+        ).cgPath
         glassView.frame = thumbView.bounds
         setNeedsDisplay()
     }
@@ -451,7 +454,7 @@ private final class TickSlider: UIControl {
             let x = thumbCenterX(for: index)
             UIBezierPath(ovalIn: CGRect(
                 x: x - tickRadius,
-                y: track.maxY + 4,
+                y: track.maxY + 4.3,
                 width: tickRadius * 2,
                 height: tickRadius * 2
             )).fill()
@@ -468,7 +471,7 @@ private final class TickSlider: UIControl {
     }
 
     private var thumbTravel: CGFloat {
-        max(0, bounds.width - thumbSize)
+        max(0, bounds.width - thumbWidth)
     }
 
     private func thumbCenterX(for index: Int) -> CGFloat {
@@ -476,7 +479,7 @@ private final class TickSlider: UIControl {
     }
 
     private func thumbCenterX(forFraction fraction: CGFloat) -> CGFloat {
-        thumbSize / 2 + thumbTravel * fraction
+        thumbWidth / 2 + thumbTravel * fraction
     }
 
     func setSelectedIndex(_ index: Int) {
@@ -490,7 +493,7 @@ private final class TickSlider: UIControl {
 
     private func updatePosition(at x: CGFloat) {
         guard thumbTravel > 0 else { return }
-        positionFraction = min(max((x - thumbSize / 2) / thumbTravel, 0), 1)
+        positionFraction = min(max((x - thumbWidth / 2) / thumbTravel, 0), 1)
         let index = Int((positionFraction * CGFloat(tickCount - 1)).rounded())
         if index != selectedIndex {
             selectedIndex = index
