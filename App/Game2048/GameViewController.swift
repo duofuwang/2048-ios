@@ -71,6 +71,7 @@ final class GameViewController: UIViewController {
             self.store.highScore = self.engine.highScore
             self.store.snapshot = self.engine.snapshot()
             self.audioEngine.pause()
+            try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
         }
 
         foregroundObserver = NotificationCenter.default.addObserver(
@@ -166,7 +167,7 @@ final class GameViewController: UIViewController {
 
     private func setupAudio() {
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default)
+        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
         try? session.setActive(true)
 
         guard let url = Bundle.main.url(forResource: "merge_fast", withExtension: "mp3"),
