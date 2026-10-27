@@ -30,6 +30,7 @@
 "pref_appearance" = "外觀";
 "pref_controls" = "操作";
 "pref_sound" = "聲音";
+"pref_game_sound" = "遊戲聲音";
 "sens_low" = "還可以";
 "sens_medium" = "恩, 不錯!";
 "sens_high" = "讚喔!";

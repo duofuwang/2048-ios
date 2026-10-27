@@ -30,6 +30,7 @@
 "pref_appearance" = "Appearance";
 "pref_controls" = "Controls";
 "pref_sound" = "Sound";
+"pref_game_sound" = "Game Sound";
 "sens_low" = "Träge";
 "sens_medium" = "Medium";
 "sens_high" = "Hoch";
