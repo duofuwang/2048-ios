@@ -91,6 +91,16 @@ final class HapticPolicyTests: XCTestCase {
         XCTAssertEqual(policy.endMove().count, 1)
     }
 
+    func testOnNewValueStopsAtWindow() {
+        let policy = makePolicy(trigger: .onNewValue)
+        policy.beginMove()
+        for power in 1...8 {
+            policy.mergeDidOccur(value: 1 << power)
+        }
+
+        XCTAssertEqual(policy.endMove().count, 4)
+    }
+
     func testSeenValuesRecordedRegardlessOfTrigger() {
         let policy = makePolicy(trigger: .perMove)
         policy.beginMove()

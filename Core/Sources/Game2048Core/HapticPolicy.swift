@@ -1,12 +1,12 @@
 import Foundation
 
-public enum HapticIntensity: String, CaseIterable, Codable {
+public enum HapticIntensity: String, CaseIterable {
     case light
     case medium
     case strong
 }
 
-public enum HapticTrigger: String, CaseIterable, Codable {
+public enum HapticTrigger: String, CaseIterable {
     case perMove
     case perMerge
     case onNewValue
@@ -24,7 +24,7 @@ public struct HapticEvent: Equatable {
 
 public final class HapticPolicy {
     static let spacing: TimeInterval = 0.06
-    static let window: TimeInterval = 0.2
+    static let burstWindow: TimeInterval = 0.2
 
     public var isEnabled: Bool
     public var intensity: HapticIntensity
@@ -94,7 +94,7 @@ public final class HapticPolicy {
         var events: [HapticEvent] = []
         var delay: TimeInterval = 0
         for _ in qualifying {
-            if delay >= Self.window {
+            if delay >= Self.burstWindow {
                 break
             }
             events.append(HapticEvent(intensity: intensity, delay: delay))
