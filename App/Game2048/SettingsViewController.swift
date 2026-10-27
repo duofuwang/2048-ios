@@ -182,18 +182,13 @@ final class SettingsViewController: UIViewController {
     }
 
     private func menuButton(title: String, isEnabled: Bool = true, options: [MenuOption]) -> UIButton {
-        var configuration = UIButton.Configuration.plain()
-        var attributedTitle = AttributedString(title)
-        attributedTitle.font = .systemFont(ofSize: 17)
-        configuration.attributedTitle = attributedTitle
-        configuration.image = Self.chevronImage
-        configuration.imagePlacement = .trailing
-        configuration.imagePadding = 6
-        configuration.imageColorTransformer = UIConfigurationColorTransformer { _ in .tertiaryLabel }
-        configuration.contentInsets = .zero
-        configuration.baseForegroundColor = .secondaryLabel
-
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17)
+        button.setTitleColor(.secondaryLabel, for: .normal)
+        button.setImage(Self.chevronImage, for: .normal)
+        button.tintColor = .tertiaryLabel
+        button.semanticContentAttribute = .forceRightToLeft
         button.showsMenuAsPrimaryAction = true
         button.menu = UIMenu(children: options.map { option in
             UIAction(title: option.title, state: option.isSelected ? .on : .off) { _ in
@@ -206,10 +201,17 @@ final class SettingsViewController: UIViewController {
         return button
     }
 
-    private static let chevronImage = UIImage(
-        systemName: "chevron.up.chevron.down",
-        withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .medium)
-    )
+    private static let chevronImage: UIImage? = {
+        let configuration = UIImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+        guard let symbol = UIImage(systemName: "chevron.up.chevron.down", withConfiguration: configuration) else {
+            return nil
+        }
+        let padding: CGFloat = 6
+        let size = CGSize(width: symbol.size.width + padding, height: symbol.size.height)
+        return UIGraphicsImageRenderer(size: size).image { _ in
+            symbol.draw(at: CGPoint(x: padding, y: 0))
+        }.withRenderingMode(.alwaysTemplate)
+    }()
 }
 
 extension SettingsViewController: UITableViewDataSource {
@@ -235,11 +237,6 @@ extension SettingsViewController: UITableViewDataSource {
         case .sound: return NSLocalizedString("pref_sound", comment: "")
         case .haptics: return NSLocalizedString("pref_haptics", comment: "")
         }
-    }
-
-    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        guard let section = Section(rawValue: section) else { return nil }
-        return section == .haptics ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

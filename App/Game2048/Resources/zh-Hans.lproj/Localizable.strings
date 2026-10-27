@@ -27,7 +27,6 @@
 "pref_haptic_trigger_per_move" = "每滑一次";
 "pref_haptic_trigger_per_merge" = "每处合并";
 "pref_haptic_trigger_on_new_value" = "合出新数值";
-"pref_haptics_footer" = "遵循系统触感设置。";
 "pref_appearance" = "外观";
 "pref_controls" = "操作";
 "pref_sound" = "声音";
