@@ -433,12 +433,11 @@ private final class TickSlider: UIControl {
             width: max(0, x - track.minX),
             height: track.height
         )
-        thumbView.frame = CGRect(
-            x: x - thumbWidth / 2,
-            y: bounds.midY - thumbHeight / 2,
-            width: thumbWidth,
-            height: thumbHeight
+        thumbView.bounds = CGRect(
+            origin: .zero,
+            size: CGSize(width: thumbWidth, height: thumbHeight)
         )
+        thumbView.center = CGPoint(x: x, y: bounds.midY)
         thumbView.layer.shadowPath = UIBezierPath(
             roundedRect: thumbView.bounds,
             cornerRadius: thumbHeight / 2
@@ -506,7 +505,7 @@ private final class TickSlider: UIControl {
     }
 
     private func setDragging(_ dragging: Bool) {
-        let scale: CGFloat = dragging ? 1.12 : 1
+        let scale: CGFloat = dragging ? 1.2 : 1
         UIView.animate(
             withDuration: 0.15,
             delay: 0,
