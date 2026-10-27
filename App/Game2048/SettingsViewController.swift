@@ -165,7 +165,10 @@ final class SettingsViewController: UIViewController {
         stack.spacing = 6
         stack.alignment = .center
         stack.isUserInteractionEnabled = false
-        stack.sizeToFit()
+        stack.frame = CGRect(
+            origin: .zero,
+            size: stack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+        )
         return stack
     }
 
