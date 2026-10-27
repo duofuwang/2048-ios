@@ -82,10 +82,7 @@ final class GameViewController: UIViewController {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            self.store.highScore = self.engine.highScore
-            self.store.hapticSeenValues = self.hapticPolicy.seenValues
-            self.store.snapshot = self.engine.snapshot()
-            self.hapticFeedback.cancel()
+            self.saveGameState()
             self.audioEngine.pause()
             try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
         }
@@ -249,11 +246,21 @@ final class GameViewController: UIViewController {
     private func performMove(_ direction: Direction) {
         guard !engine.lose else { return }
         hapticPolicy.beginMove()
+        if hapticPolicy.isEnabled {
+            hapticFeedback.prepare(intensity: hapticPolicy.intensity)
+        }
         boardView.startAnimating()
         mergeSoundIndex = 0
         engine.move(direction)
         updateScore()
         hapticFeedback.perform(hapticPolicy.endMove())
+    }
+
+    private func saveGameState() {
+        store.highScore = engine.highScore
+        store.hapticSeenValues = hapticPolicy.seenValues
+        store.snapshot = engine.snapshot()
+        hapticFeedback.cancel()
     }
 
     private func updateScore() {
@@ -292,6 +299,9 @@ final class GameViewController: UIViewController {
 
     private func startNewGame() {
         hapticPolicy.resetGame()
+        hapticPolicy.isEnabled = store.hapticsEnabled
+        hapticPolicy.intensity = store.hapticIntensity
+        hapticPolicy.trigger = store.hapticTrigger
         store.hapticSeenValues = []
         hapticFeedback.cancel()
         engine.newGame()
@@ -395,10 +405,7 @@ final class GameViewController: UIViewController {
     }
 
     @objc private func pauseTapped() {
-        store.highScore = engine.highScore
-        store.hapticSeenValues = hapticPolicy.seenValues
-        store.snapshot = engine.snapshot()
-        hapticFeedback.cancel()
+        saveGameState()
         dismiss(animated: true)
     }
 
@@ -461,10 +468,7 @@ extension GameViewController: GameEngineDelegate {
     }
 
     func gameEngineDidEnd(_ engine: GameEngine) {
-        store.highScore = engine.highScore
-        store.hapticSeenValues = hapticPolicy.seenValues
-        store.snapshot = engine.snapshot()
-        hapticFeedback.cancel()
+        saveGameState()
         swipe.isLocked = true
         boardView.isUserInteractionEnabled = false
         showGameOver()

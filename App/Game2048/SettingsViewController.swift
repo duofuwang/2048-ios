@@ -2,11 +2,17 @@ import UIKit
 import Game2048Core
 
 final class SettingsViewController: UIViewController {
+    private static let hapticsSection = 1
+
+    private struct MenuOption {
+        let title: String
+        let isSelected: Bool
+        let action: () -> Void
+    }
+
     private let store = GameStore()
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let themes: [Theme] = [.holo, .dark, .classic]
-    private let hapticIntensities: [HapticIntensity] = [.light, .medium, .strong]
-    private let hapticTriggers: [HapticTrigger] = [.perMove, .perMerge, .onNewValue]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -16,7 +22,6 @@ final class SettingsViewController: UIViewController {
         )
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
-        tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
         tableView.register(SensitivityCell.self, forCellReuseIdentifier: "sensitivity")
@@ -43,13 +48,13 @@ final class SettingsViewController: UIViewController {
 
     @objc private func hapticsSwitchChanged(_ sender: UISwitch) {
         store.hapticsEnabled = sender.isOn
-        tableView.reloadSections(IndexSet(integer: 1), with: .none)
+        tableView.reloadSections(IndexSet(integer: Self.hapticsSection), with: .none)
     }
 
     @objc private func hapticsIntensityChanged(_ sender: UISegmentedControl) {
         let index = sender.selectedSegmentIndex
-        guard hapticIntensities.indices.contains(index) else { return }
-        store.hapticIntensity = hapticIntensities[index]
+        guard HapticIntensity.allCases.indices.contains(index) else { return }
+        store.hapticIntensity = HapticIntensity.allCases[index]
     }
 
     private func name(of theme: Theme) -> String {
@@ -93,8 +98,8 @@ final class SettingsViewController: UIViewController {
             cell.textLabel?.text = NSLocalizedString("pref_haptic_intensity", comment: "")
             cell.textLabel?.textColor = store.hapticsEnabled ? .label : .secondaryLabel
             cell.selectionStyle = .none
-            let control = UISegmentedControl(items: hapticIntensities.map { name(of: $0) })
-            control.selectedSegmentIndex = hapticIntensities.firstIndex(of: store.hapticIntensity) ?? 0
+            let control = UISegmentedControl(items: HapticIntensity.allCases.map { name(of: $0) })
+            control.selectedSegmentIndex = HapticIntensity.allCases.firstIndex(of: store.hapticIntensity) ?? 0
             control.isEnabled = store.hapticsEnabled
             control.alpha = store.hapticsEnabled ? 1 : 0.5
             control.addTarget(self, action: #selector(hapticsIntensityChanged(_:)), for: .valueChanged)
@@ -106,48 +111,63 @@ final class SettingsViewController: UIViewController {
             cell.textLabel?.text = NSLocalizedString("pref_haptic_trigger", comment: "")
             cell.textLabel?.textColor = store.hapticsEnabled ? .label : .secondaryLabel
             cell.selectionStyle = .none
-            let button = UIButton(type: .system)
-            button.setTitle(name(of: store.hapticTrigger), for: .normal)
-            button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
-            button.semanticContentAttribute = .forceRightToLeft
-            button.showsMenuAsPrimaryAction = true
-            button.menu = UIMenu(children: hapticTriggers.map { trigger in
-                UIAction(
-                    title: name(of: trigger),
-                    state: store.hapticTrigger == trigger ? .on : .off
-                ) { [weak self] _ in
-                    self?.store.hapticTrigger = trigger
-                    self?.tableView.reloadSections(IndexSet(integer: 1), with: .none)
+            let button = menuButton(
+                title: name(of: store.hapticTrigger),
+                isEnabled: store.hapticsEnabled,
+                options: HapticTrigger.allCases.map { trigger in
+                    MenuOption(
+                        title: name(of: trigger),
+                        isSelected: store.hapticTrigger == trigger
+                    ) { [weak self] in
+                        self?.store.hapticTrigger = trigger
+                        self?.tableView.reloadSections(
+                            IndexSet(integer: Self.hapticsSection), with: .none
+                        )
+                    }
                 }
-            })
-            button.isEnabled = store.hapticsEnabled
-            button.alpha = store.hapticsEnabled ? 1 : 0.5
-            button.sizeToFit()
+            )
             cell.accessoryView = button
             return cell
         }
     }
+
+    private func menuButton(title: String, isEnabled: Bool = true, options: [MenuOption]) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        button.semanticContentAttribute = .forceRightToLeft
+        button.showsMenuAsPrimaryAction = true
+        button.menu = UIMenu(children: options.map { option in
+            UIAction(title: option.title, state: option.isSelected ? .on : .off) { _ in
+                option.action()
+            }
+        })
+        button.isEnabled = isEnabled
+        button.alpha = isEnabled ? 1 : 0.5
+        button.sizeToFit()
+        return button
+    }
 }
 
-extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
+extension SettingsViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        2
+        Self.hapticsSection + 1
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        section == 0 ? 4 : 3
+        section == Self.hapticsSection ? 3 : 4
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        section == 1 ? NSLocalizedString("pref_haptics", comment: "") : nil
+        section == Self.hapticsSection ? NSLocalizedString("pref_haptics", comment: "") : nil
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        section == 1 ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
+        section == Self.hapticsSection ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == 1 {
+        if indexPath.section == Self.hapticsSection {
             return hapticsCell(row: indexPath.row)
         }
 
@@ -156,21 +176,18 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.textLabel?.text = NSLocalizedString("pref_theme", comment: "")
             cell.selectionStyle = .none
-            let button = UIButton(type: .system)
-            button.setTitle(name(of: store.theme), for: .normal)
-            button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
-            button.semanticContentAttribute = .forceRightToLeft
-            button.showsMenuAsPrimaryAction = true
-            button.menu = UIMenu(children: themes.map { theme in
-                UIAction(
-                    title: name(of: theme),
-                    state: store.theme == theme ? .on : .off
-                ) { [weak self] _ in
-                    self?.store.theme = theme
-                    self?.tableView.reloadData()
+            let button = menuButton(
+                title: name(of: store.theme),
+                options: themes.map { theme in
+                    MenuOption(
+                        title: name(of: theme),
+                        isSelected: store.theme == theme
+                    ) { [weak self] in
+                        self?.store.theme = theme
+                        self?.tableView.reloadData()
+                    }
                 }
-            })
-            button.sizeToFit()
+            )
             cell.accessoryView = button
             return cell
         case 1:
