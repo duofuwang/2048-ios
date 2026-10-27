@@ -367,7 +367,7 @@ private final class TickSlider: UIControl {
     private let thumbView = UIView()
     private let glassView: UIVisualEffectView = {
         if #available(iOS 26.0, *) {
-            return UIVisualEffectView(effect: UIGlassEffect())
+            return UIVisualEffectView(effect: UIGlassEffect(style: .clear))
         }
         return UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
     }()
@@ -506,6 +506,14 @@ private final class TickSlider: UIControl {
     }
 
     private func setDragging(_ dragging: Bool) {
+        let scale: CGFloat = dragging ? 1.12 : 1
+        UIView.animate(
+            withDuration: 0.15,
+            delay: 0,
+            options: [.beginFromCurrentState, .allowUserInteraction]
+        ) {
+            self.thumbView.transform = CGAffineTransform(scaleX: scale, y: scale)
+        }
         thumbView.backgroundColor = dragging ? .clear : .white
         glassView.isHidden = !dragging
     }
