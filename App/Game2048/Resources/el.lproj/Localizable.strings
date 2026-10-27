@@ -28,6 +28,9 @@
 "pref_haptic_trigger_per_merge" = "Every merge";
 "pref_haptic_trigger_on_new_value" = "New value";
 "pref_haptics_footer" = "Follows the system haptics setting.";
+"pref_appearance" = "Appearance";
+"pref_controls" = "Controls";
+"pref_sound" = "Sound";
 "sens_low" = "Low";
 "sens_medium" = "Medium";
 "sens_high" = "High";
