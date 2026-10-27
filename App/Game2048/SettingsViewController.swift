@@ -22,6 +22,7 @@ final class SettingsViewController: UIViewController {
         )
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
+        tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
         tableView.register(SensitivityCell.self, forCellReuseIdentifier: "sensitivity")
@@ -32,6 +33,11 @@ final class SettingsViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
     }
 
     @objc private func done() {
@@ -49,12 +55,6 @@ final class SettingsViewController: UIViewController {
     @objc private func hapticsSwitchChanged(_ sender: UISwitch) {
         store.hapticsEnabled = sender.isOn
         tableView.reloadSections(IndexSet(integer: Self.hapticsSection), with: .none)
-    }
-
-    @objc private func hapticsIntensityChanged(_ sender: UISegmentedControl) {
-        let index = sender.selectedSegmentIndex
-        guard HapticIntensity.allCases.indices.contains(index) else { return }
-        store.hapticIntensity = HapticIntensity.allCases[index]
     }
 
     private func name(of theme: Theme) -> String {
@@ -97,13 +97,12 @@ final class SettingsViewController: UIViewController {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.textLabel?.text = NSLocalizedString("pref_haptic_intensity", comment: "")
             cell.textLabel?.textColor = store.hapticsEnabled ? .label : .secondaryLabel
-            cell.selectionStyle = .none
-            let control = UISegmentedControl(items: HapticIntensity.allCases.map { name(of: $0) })
-            control.selectedSegmentIndex = HapticIntensity.allCases.firstIndex(of: store.hapticIntensity) ?? 0
-            control.isEnabled = store.hapticsEnabled
-            control.alpha = store.hapticsEnabled ? 1 : 0.5
-            control.addTarget(self, action: #selector(hapticsIntensityChanged(_:)), for: .valueChanged)
-            cell.accessoryView = control
+            cell.selectionStyle = store.hapticsEnabled ? .default : .none
+            cell.accessoryView = valueAccessory(
+                name(of: store.hapticIntensity),
+                isEnabled: store.hapticsEnabled
+            )
+            cell.accessibilityValue = name(of: store.hapticIntensity)
             return cell
 
         default:
@@ -134,7 +133,10 @@ final class SettingsViewController: UIViewController {
     private func menuButton(title: String, isEnabled: Bool = true, options: [MenuOption]) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
-        button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17)
+        button.setTitleColor(.label, for: .normal)
+        button.setImage(Self.chevronImage, for: .normal)
+        button.tintColor = .tertiaryLabel
         button.semanticContentAttribute = .forceRightToLeft
         button.showsMenuAsPrimaryAction = true
         button.menu = UIMenu(children: options.map { option in
@@ -147,9 +149,45 @@ final class SettingsViewController: UIViewController {
         button.sizeToFit()
         return button
     }
+
+    private func valueAccessory(_ text: String, isEnabled: Bool = true) -> UIView {
+        let label = UILabel()
+        label.text = text
+        label.font = .systemFont(ofSize: 17)
+        label.textColor = isEnabled ? .label : .secondaryLabel
+        label.isAccessibilityElement = false
+
+        let chevron = UIImageView(image: Self.chevronImage)
+        chevron.tintColor = isEnabled ? .tertiaryLabel : .quaternaryLabel
+
+        let stack = UIStackView(arrangedSubviews: [label, chevron])
+        stack.axis = .horizontal
+        stack.spacing = 6
+        stack.alignment = .center
+        stack.isUserInteractionEnabled = false
+        stack.sizeToFit()
+        return stack
+    }
+
+    private func showIntensityPicker() {
+        let intensities = HapticIntensity.allCases
+        let page = OptionListViewController(
+            title: NSLocalizedString("pref_haptic_intensity", comment: ""),
+            options: intensities.map { name(of: $0) },
+            selectedIndex: intensities.firstIndex(of: store.hapticIntensity) ?? 0
+        ) { [weak self] index in
+            self?.store.hapticIntensity = intensities[index]
+        }
+        navigationController?.pushViewController(page, animated: true)
+    }
+
+    private static let chevronImage = UIImage(
+        systemName: "chevron.up.chevron.down",
+        withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+    )
 }
 
-extension SettingsViewController: UITableViewDataSource {
+extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     func numberOfSections(in tableView: UITableView) -> Int {
         Self.hapticsSection + 1
     }
@@ -217,6 +255,55 @@ extension SettingsViewController: UITableViewDataSource {
             return cell
         }
     }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        guard indexPath.section == Self.hapticsSection, indexPath.row == 1, store.hapticsEnabled else {
+            return
+        }
+        showIntensityPicker()
+    }
+}
+
+private final class OptionListViewController: UITableViewController {
+    private let options: [String]
+    private let selectedIndex: Int
+    private let onSelect: (Int) -> Void
+
+    init(title: String, options: [String], selectedIndex: Int, onSelect: @escaping (Int) -> Void) {
+        self.options = options
+        self.selectedIndex = selectedIndex
+        self.onSelect = onSelect
+        super.init(style: .insetGrouped)
+        self.title = title
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "option")
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        options.count
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "option", for: indexPath)
+        cell.textLabel?.text = options[indexPath.row]
+        cell.textLabel?.font = .systemFont(ofSize: 17)
+        cell.accessoryType = indexPath.row == selectedIndex ? .checkmark : .none
+        return cell
+    }
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        onSelect(indexPath.row)
+        navigationController?.popViewController(animated: true)
+    }
 }
 
 private final class SensitivityCell: UITableViewCell {
@@ -232,7 +319,7 @@ private final class SensitivityCell: UITableViewCell {
         title.text = NSLocalizedString("slider_title", comment: "")
         title.font = .systemFont(ofSize: 17)
 
-        valueLabel.font = .systemFont(ofSize: 15)
+        valueLabel.font = .systemFont(ofSize: 17)
         valueLabel.textColor = .secondaryLabel
 
         slider.minimumValue = 0
