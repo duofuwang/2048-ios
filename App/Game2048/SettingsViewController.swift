@@ -505,7 +505,7 @@ private final class TickSlider: UIControl {
     }
 
     private func setDragging(_ dragging: Bool) {
-        let scale: CGFloat = dragging ? 1.2 : 1
+        let scale: CGFloat = dragging ? 1.8 : 1
         UIView.animate(
             withDuration: 0.15,
             delay: 0,
