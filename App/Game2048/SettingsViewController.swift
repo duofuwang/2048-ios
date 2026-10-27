@@ -275,7 +275,12 @@ extension SettingsViewController: UITableViewDataSource {
 }
 
 private final class SensitivityCell: UITableViewCell {
-    private let slider = TickSlider()
+    private let control = UISegmentedControl(items: [
+        NSLocalizedString("sens_low", comment: ""),
+        NSLocalizedString("sens_medium", comment: ""),
+        NSLocalizedString("sens_high", comment: ""),
+        NSLocalizedString("sens_very_high", comment: "")
+    ])
     var onChange: ((Double) -> Void)?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -292,6 +297,7 @@ private final class SensitivityCell: UITableViewCell {
         ))
         slow.tintColor = .secondaryLabel
         slow.setContentHuggingPriority(.required, for: .horizontal)
+        slow.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let fast = UIImageView(image: UIImage(
             systemName: "hare",
@@ -299,13 +305,11 @@ private final class SensitivityCell: UITableViewCell {
         ))
         fast.tintColor = .secondaryLabel
         fast.setContentHuggingPriority(.required, for: .horizontal)
+        fast.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        slider.minimumValue = 0
-        slider.maximumValue = 1
-        slider.accessibilityLabel = NSLocalizedString("slider_title", comment: "")
-        slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
+        control.addTarget(self, action: #selector(controlChanged), for: .valueChanged)
 
-        let row = UIStackView(arrangedSubviews: [slow, slider, fast])
+        let row = UIStackView(arrangedSubviews: [slow, control, fast])
         row.axis = .horizontal
         row.spacing = 12
         row.alignment = .center
@@ -328,72 +332,12 @@ private final class SensitivityCell: UITableViewCell {
     }
 
     func configure(value: Double) {
-        slider.value = Float(value)
-        slider.snapToTick()
-        updateAccessibilityValue()
+        control.selectedSegmentIndex = Int((value * 3).rounded())
     }
 
-    @objc private func sliderChanged() {
-        slider.snapToTick()
-        updateAccessibilityValue()
-        onChange?(Double(slider.value))
-    }
-
-    private func updateAccessibilityValue() {
-        let key: String
-        switch Int((slider.value * 3).rounded()) {
-        case 0: key = "sens_low"
-        case 1: key = "sens_medium"
-        case 2: key = "sens_high"
-        default: key = "sens_very_high"
-        }
-        slider.accessibilityValue = NSLocalizedString(key, comment: "")
-    }
-}
-
-private final class TickSlider: UISlider {
-    private let tickCount = 4
-    private var step: Float { Float(1) / Float(tickCount - 1) }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        setNeedsDisplay()
-    }
-
-    override func draw(_ rect: CGRect) {
-        let track = trackRect(forBounds: bounds)
-        let radius: CGFloat = 2
-        UIColor.tertiaryLabel.setFill()
-        for index in 0..<tickCount {
-            let x = track.minX + track.width * CGFloat(index) / CGFloat(tickCount - 1)
-            UIBezierPath(ovalIn: CGRect(
-                x: x - radius,
-                y: track.maxY + 4,
-                width: radius * 2,
-                height: radius * 2
-            )).fill()
-        }
-        super.draw(rect)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            setNeedsDisplay()
-        }
-    }
-
-    func snapToTick() {
-        value = (value / step).rounded() * step
-    }
-
-    override func accessibilityIncrement() {
-        setValue(min(maximumValue, value + step), animated: false)
-        sendActions(for: .valueChanged)
-    }
-
-    override func accessibilityDecrement() {
-        setValue(max(minimumValue, value - step), animated: false)
-        sendActions(for: .valueChanged)
+    @objc private func controlChanged() {
+        let index = control.selectedSegmentIndex
+        guard index >= 0 else { return }
+        onChange?(Double(index) / 3)
     }
 }
