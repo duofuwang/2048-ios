@@ -136,13 +136,18 @@ final class SettingsViewController: UIViewController {
     }
 
     private func menuButton(title: String, isEnabled: Bool = true, options: [MenuOption]) -> UIButton {
-        let button = UIButton(type: .system)
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 17)
-        button.setTitleColor(.label, for: .normal)
-        button.setImage(Self.chevronImage, for: .normal)
-        button.tintColor = .tertiaryLabel
-        button.semanticContentAttribute = .forceRightToLeft
+        var configuration = UIButton.Configuration.plain()
+        var attributedTitle = AttributedString(title)
+        attributedTitle.font = .systemFont(ofSize: 17)
+        configuration.attributedTitle = attributedTitle
+        configuration.image = Self.chevronImage
+        configuration.imagePlacement = .trailing
+        configuration.imagePadding = 6
+        configuration.imageColorTransformer = UIConfigurationColorTransformer { _ in .tertiaryLabel }
+        configuration.contentInsets = .zero
+        configuration.baseForegroundColor = .label
+
+        let button = UIButton(configuration: configuration)
         button.showsMenuAsPrimaryAction = true
         button.menu = UIMenu(children: options.map { option in
             UIAction(title: option.title, state: option.isSelected ? .on : .off) { _ in
