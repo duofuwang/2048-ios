@@ -370,6 +370,8 @@ private final class TickSlider: UIControl {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        backgroundColor = .clear
+        isOpaque = false
         isAccessibilityElement = true
         accessibilityTraits = .adjustable
         feedback.prepare()
