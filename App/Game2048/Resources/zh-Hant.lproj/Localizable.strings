@@ -28,6 +28,9 @@
 "pref_haptic_trigger_per_merge" = "每處合併";
 "pref_haptic_trigger_on_new_value" = "合出新數值";
 "pref_haptics_footer" = "遵循系統觸感設定。";
+"pref_appearance" = "外觀";
+"pref_controls" = "操作";
+"pref_sound" = "聲音";
 "sens_low" = "還可以";
 "sens_medium" = "恩, 不錯!";
 "sens_high" = "讚喔!";

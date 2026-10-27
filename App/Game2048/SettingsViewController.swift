@@ -2,7 +2,12 @@ import UIKit
 import Game2048Core
 
 final class SettingsViewController: UIViewController {
-    private static let hapticsSection = 1
+    private enum Section: Int, CaseIterable {
+        case appearance
+        case controls
+        case sound
+        case haptics
+    }
 
     private struct MenuOption {
         let title: String
@@ -48,7 +53,7 @@ final class SettingsViewController: UIViewController {
 
     @objc private func hapticsSwitchChanged(_ sender: UISwitch) {
         store.hapticsEnabled = sender.isOn
-        tableView.reloadSections(IndexSet(integer: Self.hapticsSection), with: .none)
+        tableView.reloadSections(IndexSet(integer: Section.haptics.rawValue), with: .none)
     }
 
     private func name(of theme: Theme) -> String {
@@ -102,7 +107,7 @@ final class SettingsViewController: UIViewController {
                     ) { [weak self] in
                         self?.store.hapticIntensity = intensity
                         self?.tableView.reloadSections(
-                            IndexSet(integer: Self.hapticsSection), with: .none
+                            IndexSet(integer: Section.haptics.rawValue), with: .none
                         )
                     }
                 }
@@ -125,7 +130,7 @@ final class SettingsViewController: UIViewController {
                     ) { [weak self] in
                         self?.store.hapticTrigger = trigger
                         self?.tableView.reloadSections(
-                            IndexSet(integer: Self.hapticsSection), with: .none
+                            IndexSet(integer: Section.haptics.rawValue), with: .none
                         )
                     }
                 }
@@ -133,6 +138,47 @@ final class SettingsViewController: UIViewController {
             cell.accessoryView = button
             return cell
         }
+    }
+
+    private func themeCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = NSLocalizedString("pref_theme", comment: "")
+        cell.selectionStyle = .none
+        cell.accessoryView = menuButton(
+            title: name(of: store.theme),
+            options: themes.map { theme in
+                MenuOption(
+                    title: name(of: theme),
+                    isSelected: store.theme == theme
+                ) { [weak self] in
+                    self?.store.theme = theme
+                    self?.tableView.reloadData()
+                }
+            }
+        )
+        return cell
+    }
+
+    private func quickSwitchCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = NSLocalizedString("pref_themebutton", comment: "")
+        cell.selectionStyle = .none
+        let toggle = UISwitch()
+        toggle.isOn = store.themeQuickSwitch
+        toggle.addTarget(self, action: #selector(themeSwitchChanged(_:)), for: .valueChanged)
+        cell.accessoryView = toggle
+        return cell
+    }
+
+    private func silentModeCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
+        cell.selectionStyle = .none
+        let toggle = UISwitch()
+        toggle.isOn = store.respectSilentMode
+        toggle.addTarget(self, action: #selector(respectSilentChanged(_:)), for: .valueChanged)
+        cell.accessoryView = toggle
+        return cell
     }
 
     private func menuButton(title: String, isEnabled: Bool = true, options: [MenuOption]) -> UIButton {
@@ -145,7 +191,7 @@ final class SettingsViewController: UIViewController {
         configuration.imagePadding = 6
         configuration.imageColorTransformer = UIConfigurationColorTransformer { _ in .tertiaryLabel }
         configuration.contentInsets = .zero
-        configuration.baseForegroundColor = .label
+        configuration.baseForegroundColor = .secondaryLabel
 
         let button = UIButton(configuration: configuration)
         button.showsMenuAsPrimaryAction = true
@@ -168,70 +214,50 @@ final class SettingsViewController: UIViewController {
 
 extension SettingsViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        Self.hapticsSection + 1
+        Section.allCases.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        section == Self.hapticsSection ? 3 : 4
+        guard let section = Section(rawValue: section) else { return 0 }
+        switch section {
+        case .appearance: return 2
+        case .controls: return 1
+        case .sound: return 1
+        case .haptics: return 3
+        }
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        section == Self.hapticsSection ? NSLocalizedString("pref_haptics", comment: "") : nil
+        guard let section = Section(rawValue: section) else { return nil }
+        switch section {
+        case .appearance: return NSLocalizedString("pref_appearance", comment: "")
+        case .controls: return NSLocalizedString("pref_controls", comment: "")
+        case .sound: return NSLocalizedString("pref_sound", comment: "")
+        case .haptics: return NSLocalizedString("pref_haptics", comment: "")
+        }
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        section == Self.hapticsSection ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
+        guard let section = Section(rawValue: section) else { return nil }
+        return section == .haptics ? NSLocalizedString("pref_haptics_footer", comment: "") : nil
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == Self.hapticsSection {
-            return hapticsCell(row: indexPath.row)
-        }
-
-        switch indexPath.row {
-        case 0:
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = NSLocalizedString("pref_theme", comment: "")
-            cell.selectionStyle = .none
-            let button = menuButton(
-                title: name(of: store.theme),
-                options: themes.map { theme in
-                    MenuOption(
-                        title: name(of: theme),
-                        isSelected: store.theme == theme
-                    ) { [weak self] in
-                        self?.store.theme = theme
-                        self?.tableView.reloadData()
-                    }
-                }
-            )
-            cell.accessoryView = button
-            return cell
-        case 1:
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = NSLocalizedString("pref_themebutton", comment: "")
-            cell.selectionStyle = .none
-            let toggle = UISwitch()
-            toggle.isOn = store.themeQuickSwitch
-            toggle.addTarget(self, action: #selector(themeSwitchChanged(_:)), for: .valueChanged)
-            cell.accessoryView = toggle
-            return cell
-        case 3:
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = NSLocalizedString("pref_respect_silent", comment: "")
-            cell.selectionStyle = .none
-            let toggle = UISwitch()
-            toggle.isOn = store.respectSilentMode
-            toggle.addTarget(self, action: #selector(respectSilentChanged(_:)), for: .valueChanged)
-            cell.accessoryView = toggle
-            return cell
-        default:
+        guard let section = Section(rawValue: indexPath.section) else { return UITableViewCell() }
+        switch section {
+        case .appearance:
+            return indexPath.row == 0 ? themeCell() : quickSwitchCell()
+        case .controls:
             let cell = tableView.dequeueReusableCell(withIdentifier: "sensitivity", for: indexPath) as! SensitivityCell
             cell.configure(value: store.sensitivity)
             cell.onChange = { [weak self] value in
                 self?.store.sensitivity = value
             }
             return cell
+        case .sound:
+            return silentModeCell()
+        case .haptics:
+            return hapticsCell(row: indexPath.row)
         }
     }
 }
