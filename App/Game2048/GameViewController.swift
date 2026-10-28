@@ -38,6 +38,10 @@ final class GameViewController: UIViewController {
         engine = GameEngine(highScore: store.highScore)
         engine.delegate = self
         var restoringGame = false
+        engine.restore(GameSnapshot(
+            board: Self.demoBoard, score: 0, maxMerged: 2048,
+            highScore: store.highScore, won: false, lose: false
+        ))
         if ProcessInfo.processInfo.arguments.contains("-showGameOver") {
             engine.restore(GameSnapshot(
                 board: Self.seededBoard, score: 676, maxMerged: 32,
@@ -490,6 +494,16 @@ final class GameViewController: UIViewController {
         let rows = [
             [2, 4, 8, 16],
             [32, 64, 128, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ]
+        return (0..<4).map { x in (0..<4).map { y in rows[y][x] } }
+    }()
+
+    private static let demoBoard: [[Int]] = {
+        let rows = [
+            [2048, 2048, 0, 0],
+            [0, 0, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
         ]
