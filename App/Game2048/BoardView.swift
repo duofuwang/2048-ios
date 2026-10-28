@@ -12,17 +12,7 @@ final class BoardView: UIView {
     private let gridWidth: CGFloat = 2
     private var boardOrigin = CGPoint.zero
     private var lastLayoutSize: CGSize = .zero
-    private var celebrationLayers: [CAEmitterLayer] = []
-
-    private static let confettiImage: UIImage = {
-        let size = CGSize(width: 12, height: 6)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        return UIGraphicsImageRenderer(size: size, format: format).image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(origin: .zero, size: size))
-        }
-    }()
+    private var celebrationViews: [ConfettiView] = []
 
     init(engine: GameEngine, theme: Theme) {
         self.engine = engine
@@ -117,54 +107,23 @@ final class BoardView: UIView {
 
     func celebrate(value: Int) {
         guard !UIAccessibility.isReduceMotionEnabled, cellSize > 0 else { return }
-        guard let center = cellCenter(for: value) else { return }
+        guard let center = cellCenter(for: value), let host = superview else { return }
 
-        let emitter = CAEmitterLayer()
-        emitter.emitterPosition = center
-        emitter.emitterShape = .circle
-        emitter.emitterSize = CGSize(width: cellSize * 0.35, height: cellSize * 0.35)
-        emitter.birthRate = 1
+        let confetti = ConfettiView(frame: host.bounds)
+        host.addSubview(confetti)
+        confetti.start(at: convert(center, to: host))
+        celebrationViews.append(confetti)
 
-        let colors: [UIColor] = [
-            UIColor(hex: 0xEDC22E),
-            UIColor(hex: 0xF67C5F),
-            UIColor(hex: 0x8FBF3F),
-            .white,
-            UIColor(hex: 0xF2B179),
-        ]
-        emitter.emitterCells = colors.map { color in
-            let cell = CAEmitterCell()
-            cell.contents = Self.confettiImage.cgImage
-            cell.color = color.cgColor
-            cell.birthRate = 40
-            cell.lifetime = 1.6
-            cell.lifetimeRange = 0.25
-            cell.velocity = 150
-            cell.velocityRange = 60
-            cell.emissionRange = .pi * 2
-            cell.yAcceleration = 110
-            cell.spin = 2
-            cell.spinRange = 5
-            cell.scale = 0.6
-            cell.scaleRange = 0.2
-            cell.alphaSpeed = -0.5
-            return cell
-        }
-
-        layer.addSublayer(emitter)
-        celebrationLayers.append(emitter)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak emitter] in
-            emitter?.birthRate = 0
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { [weak self, weak emitter] in
-            emitter?.removeFromSuperlayer()
-            self?.celebrationLayers.removeAll { $0 === emitter }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self, weak confetti] in
+            confetti?.stop()
+            confetti?.removeFromSuperview()
+            self?.celebrationViews.removeAll { $0 === confetti }
         }
     }
 
     func clearCelebration() {
-        celebrationLayers.forEach { $0.removeFromSuperlayer() }
-        celebrationLayers.removeAll()
+        celebrationViews.forEach { $0.stop(); $0.removeFromSuperview() }
+        celebrationViews.removeAll()
     }
 
     private func cellCenter(for value: Int) -> CGPoint? {
