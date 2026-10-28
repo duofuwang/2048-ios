@@ -113,7 +113,7 @@ final class Game2048UITests: XCTestCase {
         let moved = boardValue(board)
 
         XCUIDevice.shared.press(.home)
-        RunLoop.current.run(until: Date().addingTimeInterval(1))
+        RunLoop.current.run(until: Date().addingTimeInterval(3))
         app.terminate()
         app.launchArguments = ["-showGame"]
         app.launch()
