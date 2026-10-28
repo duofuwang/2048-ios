@@ -95,6 +95,10 @@ jobs:
           sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/gameover.png
           xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
+          xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showWin
+          sleep 3
+          xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/win.png
+          xcrun simctl terminate "$SIMULATOR_UDID" com.duofuwang.game2048 || true
           xcrun simctl launch "$SIMULATOR_UDID" com.duofuwang.game2048 -showGame -showNewGame
           sleep 6
           xcrun simctl io "$SIMULATOR_UDID" screenshot artifacts/newgame.png

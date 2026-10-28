@@ -12,14 +12,19 @@ final class GameViewController: UIViewController {
     private var soundButton: UIButton!
     private let audioEngine = AVAudioEngine()
     private var mergeBuffer: AVAudioPCMBuffer?
+    private var winBuffer: AVAudioPCMBuffer?
     private var playerNodes: [AVAudioPlayerNode] = []
+    private var winNode: AVAudioPlayerNode?
     private var nextNode = 0
     private var mergeSoundIndex = 0
     private let audioQueue = DispatchQueue(label: "com.duofuwang.game2048.audio")
     private var swipe: SwipeInput!
     private var hapticPolicy: HapticPolicy!
     private let hapticFeedback = HapticFeedback()
-    private var toastLabel: UILabel?
+    private var celebratedMilestones: Set<Int> = []
+    private var pendingMilestone: Int?
+    private var celebrationWorkItem: DispatchWorkItem?
+    private var winDemoTimer: Timer?
     private var gameOverOverlay: GameOverOverlay?
     private var backgroundObserver: NSObjectProtocol?
     private var foregroundObserver: NSObjectProtocol?
@@ -37,6 +42,11 @@ final class GameViewController: UIViewController {
             engine.restore(GameSnapshot(
                 board: Self.seededBoard, score: 676, maxMerged: 32,
                 highScore: 676, won: false, lose: true
+            ))
+        } else if ProcessInfo.processInfo.arguments.contains("-showWin") {
+            engine.restore(GameSnapshot(
+                board: Self.winBoard, score: 20672, maxMerged: 2048,
+                highScore: 20672, won: true, lose: false
             ))
         } else if ProcessInfo.processInfo.arguments.contains("-seedMerge") {
             engine.restore(GameSnapshot(
@@ -62,6 +72,7 @@ final class GameViewController: UIViewController {
         if !restoringGame {
             store.hapticSeenValues = []
         }
+        markCelebratedMilestonesFromBoard()
 
         buildInterface()
         setupAudio()
@@ -74,6 +85,16 @@ final class GameViewController: UIViewController {
         }
         if ProcessInfo.processInfo.arguments.contains("-showNewGame") {
             showNewGameConfirm()
+        }
+        if ProcessInfo.processInfo.arguments.contains("-showWin") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                self?.boardView.celebrate(value: 2048)
+                self?.playWinSound()
+            }
+            winDemoTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+                self?.boardView.celebrate(value: 2048)
+                self?.playWinSound()
+            }
         }
 
         backgroundObserver = NotificationCenter.default.addObserver(
@@ -103,6 +124,7 @@ final class GameViewController: UIViewController {
         if let observer = foregroundObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        winDemoTimer?.invalidate()
         audioEngine.stop()
     }
 
@@ -201,9 +223,25 @@ final class GameViewController: UIViewController {
             audioEngine.connect(node, to: audioEngine.mainMixerNode, format: buffer.format)
             playerNodes.append(node)
         }
+
+        if let url = Bundle.main.url(forResource: "win", withExtension: "mp3"),
+           let file = try? AVAudioFile(forReading: url),
+           let buffer = AVAudioPCMBuffer(
+               pcmFormat: file.processingFormat,
+               frameCapacity: AVAudioFrameCount(file.length)
+           ) {
+            try? file.read(into: buffer)
+            winBuffer = buffer
+            let node = AVAudioPlayerNode()
+            audioEngine.attach(node)
+            audioEngine.connect(node, to: audioEngine.mainMixerNode, format: buffer.format)
+            winNode = node
+        }
+
         audioEngine.prepare()
         try? audioEngine.start()
         playerNodes.forEach { $0.play() }
+        winNode?.play()
     }
 
     private func resumeAudioEngine() {
@@ -215,6 +253,9 @@ final class GameViewController: UIViewController {
             if !node.isPlaying {
                 node.play()
             }
+        }
+        if let winNode, !winNode.isPlaying {
+            winNode.play()
         }
     }
 
@@ -245,6 +286,7 @@ final class GameViewController: UIViewController {
 
     private func performMove(_ direction: Direction) {
         guard !engine.lose else { return }
+        pendingMilestone = nil
         hapticPolicy.beginMove()
         if hapticPolicy.isEnabled {
             hapticFeedback.prepare(intensity: hapticPolicy.intensity)
@@ -254,6 +296,9 @@ final class GameViewController: UIViewController {
         engine.move(direction)
         updateScore()
         hapticFeedback.perform(hapticPolicy.endMove())
+        if let milestone = pendingMilestone {
+            celebrate(milestone)
+        }
     }
 
     private func saveGameState() {
@@ -261,6 +306,9 @@ final class GameViewController: UIViewController {
         store.hapticSeenValues = hapticPolicy.seenValues
         store.snapshot = engine.snapshot()
         hapticFeedback.cancel()
+        celebrationWorkItem?.cancel()
+        celebrationWorkItem = nil
+        boardView.clearCelebration()
     }
 
     private func updateScore() {
@@ -298,6 +346,11 @@ final class GameViewController: UIViewController {
     }
 
     private func startNewGame() {
+        celebratedMilestones.removeAll()
+        pendingMilestone = nil
+        celebrationWorkItem?.cancel()
+        celebrationWorkItem = nil
+        boardView.clearCelebration()
         hapticPolicy.resetGame()
         hapticPolicy.isEnabled = store.hapticsEnabled
         hapticPolicy.intensity = store.hapticIntensity
@@ -312,35 +365,39 @@ final class GameViewController: UIViewController {
         boardView.startAnimating()
     }
 
-    private func showToast(_ text: String) {
-        toastLabel?.removeFromSuperview()
-        let label = InsetLabel()
-        label.text = text
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 15)
-        label.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-        label.layer.cornerRadius = 8
-        label.clipsToBounds = true
-        label.alpha = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            label.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -32),
-        ])
-        toastLabel = label
-        UIView.animate(withDuration: 0.2) { label.alpha = 1 }
-        UIView.animate(withDuration: 0.3, delay: 2.5) {
-            label.alpha = 0
-        } completion: { [weak self] _ in
-            label.removeFromSuperview()
-            if self?.toastLabel === label {
-                self?.toastLabel = nil
+    private func playWinSound() {
+        guard store.soundVolume > 0, let buffer = winBuffer else { return }
+        let volume = Float(store.soundVolume)
+        audioQueue.async { [weak self] in
+            guard let self, let node = self.winNode else { return }
+            node.volume = volume
+            node.scheduleBuffer(buffer, at: nil, options: [.interrupts], completionHandler: nil)
+            if !node.isPlaying {
+                node.play()
             }
         }
+    }
+
+    private func celebrate(_ value: Int) {
+        celebratedMilestones.insert(value)
+        celebrationWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.boardView.celebrate(value: value)
+            self.playWinSound()
+        }
+        celebrationWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+    }
+
+    private func markCelebratedMilestonesFromBoard() {
+        var maxTile = 0
+        for x in 0..<GameEngine.sizeX {
+            for y in 0..<GameEngine.sizeY {
+                maxTile = max(maxTile, engine.grid.field[x][y]?.value ?? 0)
+            }
+        }
+        celebratedMilestones = Set(Self.milestones.filter { $0 <= maxTile })
     }
 
     private func showGameOver() {
@@ -439,6 +496,20 @@ final class GameViewController: UIViewController {
         return (0..<4).map { x in (0..<4).map { y in rows[y][x] } }
     }()
 
+    private static let winBoard: [[Int]] = {
+        let rows = [
+            [2048, 64, 0, 0],
+            [4, 8, 16, 2],
+            [32, 2, 4, 0],
+            [2, 8, 4, 0],
+        ]
+        return (0..<4).map { x in (0..<4).map { y in rows[y][x] } }
+    }()
+
+    private static let milestones: Set<Int> = [
+        2048, 4096, 8192, 16384, 32768, 65536, 131072,
+    ]
+
     private static let mergeBoard: [[Int]] = {
         let rows = [
             [2, 2, 0, 0],
@@ -453,15 +524,16 @@ final class GameViewController: UIViewController {
 extension GameViewController: GameEngineDelegate {
     func gameEngine(_ engine: GameEngine, didMerge value: Int) {
         hapticPolicy.mergeDidOccur(value: value)
+        if Self.milestones.contains(value), !celebratedMilestones.contains(value) {
+            celebratedMilestones.insert(value)
+            pendingMilestone = max(pendingMilestone ?? 0, value)
+        }
         let delay = Double(mergeSoundIndex) * 0.012
         mergeSoundIndex += 1
         playMergeSound(after: delay)
     }
 
     func gameEngine(_ engine: GameEngine, didReach value: Int) {
-        if value == 2048 {
-            showToast("You won, Congratulations! Now let's see how far you can go.")
-        }
     }
 
     func gameEngine(_ engine: GameEngine, didUpdateHighScore value: Int) {
@@ -472,31 +544,5 @@ extension GameViewController: GameEngineDelegate {
         swipe.isLocked = true
         boardView.isUserInteractionEnabled = false
         showGameOver()
-    }
-}
-
-private final class InsetLabel: UILabel {
-    private let insets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
-
-    override func drawText(in rect: CGRect) {
-        super.drawText(in: rect.inset(by: insets))
-    }
-
-    override var intrinsicContentSize: CGSize {
-        let size = super.intrinsicContentSize
-        return CGSize(
-            width: size.width + insets.left + insets.right,
-            height: size.height + insets.top + insets.bottom
-        )
-    }
-
-    override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let inner = super.sizeThatFits(
-            CGSize(width: size.width - insets.left - insets.right, height: size.height)
-        )
-        return CGSize(
-            width: inner.width + insets.left + insets.right,
-            height: inner.height + insets.top + insets.bottom
-        )
     }
 }
