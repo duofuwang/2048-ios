@@ -136,27 +136,27 @@ final class BoardView: UIView {
             let cell = CAEmitterCell()
             cell.contents = Self.confettiImage.cgImage
             cell.color = color.cgColor
-            cell.birthRate = 55
-            cell.lifetime = 0.9
-            cell.lifetimeRange = 0.2
-            cell.velocity = 70
-            cell.velocityRange = 50
+            cell.birthRate = 40
+            cell.lifetime = 1.6
+            cell.lifetimeRange = 0.25
+            cell.velocity = 150
+            cell.velocityRange = 60
             cell.emissionRange = .pi * 2
-            cell.yAcceleration = 220
+            cell.yAcceleration = 110
             cell.spin = 2
             cell.spinRange = 5
             cell.scale = 0.6
             cell.scaleRange = 0.2
-            cell.alphaSpeed = -0.9
+            cell.alphaSpeed = -0.5
             return cell
         }
 
         layer.addSublayer(emitter)
         celebrationLayers.append(emitter)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak emitter] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak emitter] in
             emitter?.birthRate = 0
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self, weak emitter] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { [weak self, weak emitter] in
             emitter?.removeFromSuperlayer()
             self?.celebrationLayers.removeAll { $0 === emitter }
         }
