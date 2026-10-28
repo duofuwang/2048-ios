@@ -39,7 +39,7 @@ final class GameViewController: UIViewController {
         engine.delegate = self
         var restoringGame = false
         engine.restore(GameSnapshot(
-            board: Self.demoBoard, score: 0, maxMerged: 2048,
+            board: Self.demoBoard, score: 0, maxMerged: 1024,
             highScore: store.highScore, won: false, lose: false
         ))
         if ProcessInfo.processInfo.arguments.contains("-showGameOver") {
@@ -361,7 +361,10 @@ final class GameViewController: UIViewController {
         hapticPolicy.trigger = store.hapticTrigger
         store.hapticSeenValues = []
         hapticFeedback.cancel()
-        engine.newGame()
+        engine.restore(GameSnapshot(
+            board: Self.demoBoard, score: 0, maxMerged: 1024,
+            highScore: engine.highScore, won: false, lose: false
+        ))
         store.snapshot = engine.snapshot()
         swipe.isLocked = false
         boardView.isUserInteractionEnabled = true
@@ -502,7 +505,7 @@ final class GameViewController: UIViewController {
 
     private static let demoBoard: [[Int]] = {
         let rows = [
-            [2048, 2048, 0, 0],
+            [1024, 1024, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
