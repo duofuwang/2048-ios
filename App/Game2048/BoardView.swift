@@ -16,7 +16,9 @@ final class BoardView: UIView {
 
     private static let confettiImage: UIImage = {
         let size = CGSize(width: 12, height: 6)
-        return UIGraphicsImageRenderer(size: size).image { context in
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
             UIColor.white.setFill()
             context.fill(CGRect(origin: .zero, size: size))
         }
